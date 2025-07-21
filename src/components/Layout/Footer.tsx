@@ -1,3 +1,4 @@
+```typescript
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Instagram, MessageCircle, Linkedin, Mail, Phone } from 'lucide-react';
@@ -70,3 +71,4 @@ const Footer: React.FC = () => {
 };
 
 export default Footer;
+```

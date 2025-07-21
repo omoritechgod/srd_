@@ -1,3 +1,4 @@
+```typescript
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Check, X, Trash2, Star, User } from 'lucide-react';
@@ -272,3 +273,4 @@ const TestimonialManager: React.FC = () => {
 };
 
 export default TestimonialManager;
+```

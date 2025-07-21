@@ -1,3 +1,4 @@
+```typescript
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, User, Phone, Mail, FileText, Download, Filter } from 'lucide-react';
@@ -340,3 +341,4 @@ const BookingManager: React.FC = () => {
 };
 
 export default BookingManager;
+```

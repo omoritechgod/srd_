@@ -1,3 +1,4 @@
+```typescript
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Star, Quote, ChevronLeft, ChevronRight, Send } from 'lucide-react';
@@ -380,3 +381,4 @@ const Testimonials: React.FC = () => {
 };
 
 export default Testimonials;
+```

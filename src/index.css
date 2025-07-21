@@ -1,3 +1,4 @@
+```css
 @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
@@ -5,7 +6,7 @@
 
 @layer base {
   * {
-    @apply border-gray-200; /* ✅ fixed */
+    @apply border-gray-200;
   }
   body {
     @apply bg-white text-dark font-sora;
@@ -33,3 +34,5 @@
     @apply px-4 sm:px-6 lg:px-8 py-16;
   }
 }
+
+```

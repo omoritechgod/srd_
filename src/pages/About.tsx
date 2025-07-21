@@ -1,3 +1,4 @@
+```typescript
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Target, Eye, Heart } from 'lucide-react';
@@ -191,3 +192,4 @@ Whether you're looking to build brand awareness, manage a crisis, or develop a c
 };
 
 export default About;
+```

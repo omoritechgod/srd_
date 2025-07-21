@@ -1,3 +1,4 @@
+```typescript
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
@@ -334,3 +335,4 @@ SRD Consulting Ltd`;
 };
 
 export default PaymentLink;
+```

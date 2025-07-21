@@ -1,3 +1,4 @@
+```typescript
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -228,3 +229,4 @@ const Blog: React.FC = () => {
 };
 
 export default Blog;
+```

@@ -1,3 +1,4 @@
+```typescript
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
@@ -257,3 +258,4 @@ Whether you're looking to build brand awareness, manage a crisis, or develop a c
 };
 
 export default AboutManager;
+```

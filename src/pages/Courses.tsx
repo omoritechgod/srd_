@@ -1,3 +1,4 @@
+```typescript
 import React from 'react';
 import { motion } from 'framer-motion';
 import { BookOpen, Clock, Bell } from 'lucide-react';
@@ -121,4 +122,4 @@ const Courses: React.FC = () => {
   );
 };
 
-export default Courses;
+export default Courses;```
