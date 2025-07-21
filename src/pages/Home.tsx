@@ -22,7 +22,11 @@ const Home: React.FC = () => {
     <div className="overflow-hidden">
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-primary/10 to-primary/5 min-h-screen flex items-center">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23F58220" fill-opacity="0.05"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] animate-pulse"></div>
+        <div className="absolute inset-0 opacity-30">
+          <div className="absolute top-20 left-20 w-32 h-32 bg-primary/10 rounded-full animate-bounce"></div>
+          <div className="absolute bottom-20 right-20 w-24 h-24 bg-primary/20 rounded-full animate-pulse"></div>
+          <div className="absolute top-1/2 left-10 w-16 h-16 bg-primary/15 rounded-full animate-ping"></div>
+        </div>
         
         <div className="max-w-7xl mx-auto section-padding relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
