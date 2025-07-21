@@ -8,10 +8,14 @@ const options = {
       title: 'SRD Consulting Ltd API',
       version: '1.0.0',
       description: 'API documentation for the SRD Consulting Ltd website backend.',
+      contact: {
+        name: 'SRD Consulting Ltd',
+        email: 'info@adminsrd.com'
+      }
     },
     servers: [
       {
-        url: 'http://localhost:3001/api', // Adjust based on your backend URL
+        url: 'http://localhost:3001/api',
         description: 'Development server',
       },
       // Add production server URL here when deployed
@@ -26,6 +30,7 @@ const options = {
           type: 'http',
           scheme: 'bearer',
           bearerFormat: 'JWT',
+          description: 'Enter JWT token obtained from /api/auth/login'
         },
       },
       schemas: {
@@ -86,6 +91,13 @@ const options = {
             updatedAt: { type: 'string', format: 'date-time' },
           },
         },
+        Error: {
+          type: 'object',
+          properties: {
+            message: { type: 'string' },
+            error: { type: 'string', nullable: true }
+          }
+        }
       },
     },
   },
