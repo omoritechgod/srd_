@@ -62,11 +62,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // In a real application, you would integrate with an email service here
   // (e.g., Nodemailer, SendGrid, Mailgun) to send the email.
   console.log('New Contact Form Submission:');
-  console.log(`Name: ${name}`);
-  console.log(`Email: ${email}`);
-  console.log(`Phone: ${phone || 'N/A'}`);
-  console.log(`Subject: ${subject}`);
-  console.log(`Message: ${message}`);
+  console.log(\`Name: ${name}`);
+  console.log(\`Email: ${email}`);
+  console.log(\`Phone: ${phone || 'N/A'}`);
+  console.log(\`Subject: ${subject}`);
+  console.log(\`Message: ${message}`);
   console.log('---');
 
   // Simulate sending email

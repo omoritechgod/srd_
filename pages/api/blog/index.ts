@@ -16,10 +16,10 @@ export const config = {
 const apiRoute = nextConnect<NextApiRequest, NextApiResponse>({
   onError(error, req, res) {
     console.error('API Route Error:', error);
-    res.status(501).json({ message: `Sorry something happened! ${error.message}` });
+    res.status(501).json({ message: \`Sorry something happened! ${error.message}` });
   },
   onNoMatch(req, res) {
-    res.status(405).json({ message: `Method '${req.method}' Not Allowed` });
+    res.status(405).json({ message: \`Method '${req.method}\' Not Allowed` });
   },
 });
 

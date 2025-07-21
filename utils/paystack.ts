@@ -17,7 +17,7 @@ export const generatePaystackPaymentLink = async (
 
   try {
     const response = await axios.post(
-      `${PAYSTACK_API_BASE_URL}/transaction/initialize`,
+      \`${PAYSTACK_API_BASE_URL}/transaction/initialize`,
       {
         email: email || 'customer@example.com', // Fallback email if not provided
         amount: amount, // amount in kobo
@@ -28,7 +28,7 @@ export const generatePaystackPaymentLink = async (
       },
       {
         headers: {
-          Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
+          Authorization: \`Bearer ${PAYSTACK_SECRET_KEY}`,
           'Content-Type': 'application/json',
         },
       }

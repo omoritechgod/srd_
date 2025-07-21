@@ -23,7 +23,7 @@ async function main() {
     },
   });
 
-  console.log(`Admin user created/updated: ${adminUser.email}`);
+  console.log(\`Admin user created/updated: ${adminUser.email}`);
 }
 
 main()
