@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Calendar, User, Phone, Mail, FileText, Download, Filter } from 'lucide-react';
+import { Calendar, User, Phone, Mail, FileText, Download, Filter, ArrowLeft } from 'lucide-react';
 import { format } from 'date-fns';
 import api from '../../services/api';
 
@@ -132,6 +133,13 @@ const BookingManager: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div>
+              <Link 
+                to="/admin/dashboard"
+                className="inline-flex items-center text-gray hover:text-primary mb-2 transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Dashboard
+              </Link>
               <h1 className="text-2xl font-bold text-dark">Booking Management</h1>
               <p className="text-gray">View and manage consultation bookings</p>
             </div>

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
-import { Plus, Edit, Trash2, Save, X, Eye } from 'lucide-react';
+import { Plus, Edit, Trash2, Save, X, Eye, ArrowLeft } from 'lucide-react';
 import { format } from 'date-fns';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
@@ -142,6 +143,13 @@ const BlogManager: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div>
+              <Link 
+                to="/admin/dashboard"
+                className="inline-flex items-center text-gray hover:text-primary mb-2 transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Dashboard
+              </Link>
               <h1 className="text-2xl font-bold text-dark">Blog Management</h1>
               <p className="text-gray">Create and manage blog posts</p>
             </div>

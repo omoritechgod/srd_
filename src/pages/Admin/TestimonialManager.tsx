@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Check, X, Trash2, Star, User } from 'lucide-react';
+import { Check, X, Trash2, Star, User, ArrowLeft } from 'lucide-react';
 import { format } from 'date-fns';
 import api from '../../services/api';
 
@@ -93,6 +94,13 @@ const TestimonialManager: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div>
+              <Link 
+                to="/admin/dashboard"
+                className="inline-flex items-center text-gray hover:text-primary mb-2 transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Dashboard
+              </Link>
               <h1 className="text-2xl font-bold text-dark">Testimonial Management</h1>
               <p className="text-gray">Review and approve client testimonials</p>
             </div>
