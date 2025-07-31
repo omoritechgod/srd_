@@ -15,7 +15,7 @@ interface Booking {
   notes?: string;
   file?: string;
   status?: 'pending' | 'confirmed' | 'cancelled';
-  createdAt: string;
+  created_at: string;
 }
 
 const BookingManager: React.FC = () => {
@@ -29,35 +29,10 @@ const BookingManager: React.FC = () => {
 
   const fetchBookings = async () => {
     try {
-      const response = await api.get('/bookings/admin');
+      const response = await api.get('/admin/bookings');
       setBookings(response.data);
     } catch (error) {
       console.error('Failed to fetch bookings:', error);
-      // Demo data fallback
-      setBookings([
-        {
-          id: '1',
-          name: 'John Smith',
-          email: 'john.smith@example.com',
-          phone: '+234 123 456 7890',
-          service: 'Media Relations',
-          date: new Date(Date.now() + 86400000).toISOString(),
-          notes: 'Looking for help with product launch PR strategy',
-          status: 'pending',
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: '2',
-          name: 'Sarah Johnson',
-          email: 'sarah.j@company.com',
-          phone: '+234 987 654 3210',
-          service: 'Crisis Communication Management',
-          date: new Date(Date.now() + 172800000).toISOString(),
-          notes: 'Urgent crisis communication support needed',
-          status: 'confirmed',
-          createdAt: new Date(Date.now() - 86400000).toISOString()
-        }
-      ]);
     } finally {
       setLoading(false);
     }
@@ -65,7 +40,7 @@ const BookingManager: React.FC = () => {
 
   const updateBookingStatus = async (id: string, status: 'pending' | 'confirmed' | 'cancelled') => {
     try {
-      await api.put(`/bookings/${id}/status`, { status });
+      await api.put(`/admin/bookings/${id}/status`, { status });
       await fetchBookings();
     } catch (error) {
       console.error('Failed to update booking status:', error);
@@ -295,7 +270,7 @@ const BookingManager: React.FC = () => {
                     {booking.file && (
                       <div className="mb-4">
                         <a 
-                          href={booking.file} 
+                          href={`http://127.0.0.1:8000/storage/${booking.file}`} 
                           target="_blank" 
                           rel="noopener noreferrer"
                           className="text-primary hover:text-primary/80 text-sm inline-flex items-center"
@@ -307,7 +282,7 @@ const BookingManager: React.FC = () => {
                     )}
 
                     <p className="text-xs text-gray">
-                      Submitted: {format(new Date(booking.createdAt), 'MMM dd, yyyy - h:mm a')}
+                      Submitted: {format(new Date(booking.created_at), 'MMM dd, yyyy - h:mm a')}
                     </p>
                   </div>
                 </div>
