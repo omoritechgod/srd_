@@ -46,9 +46,12 @@ const Booking: React.FC = () => {
       formData.append('email', data.email);
       formData.append('phone', data.phone);
       formData.append('service', data.service);
-      formData.append('date', selectedDate.toISOString());
+
+      // ✅ Format date for MySQL
+      const formattedDate = selectedDate.toISOString().replace('T', ' ').replace('Z', '').slice(0, 19);
+      formData.append('date', formattedDate);
+
       formData.append('notes', data.notes || '');
-      
       if (uploadedFile) {
         formData.append('file', uploadedFile);
       }
@@ -70,6 +73,7 @@ const Booking: React.FC = () => {
       setSubmitting(false);
     }
   };
+
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
