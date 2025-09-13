@@ -23,6 +23,8 @@ import TestimonialManager from './pages/Admin/TestimonialManager';
 import BookingManager from './pages/Admin/BookingManager';
 import AboutManager from './pages/Admin/AboutManager';
 import PaymentLink from './pages/Admin/PaymentLink';
+import ReceiptManager from './pages/Admin/RecieptManager';
+import ContactManager from './pages/Admin/ContactManager';
 
 function App() {
   return (
@@ -102,6 +104,16 @@ function App() {
           <Route path="/admin/payments" element={
             <ProtectedRoute>
               <PaymentLink />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/receipts" element={
+            <ProtectedRoute>
+              <ReceiptManager/>
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/contacts" element={
+            <ProtectedRoute>
+              <ContactManager />
             </ProtectedRoute>
           } />
         </Routes>

@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Star, Quote, ChevronLeft, ChevronRight, Send } from 'lucide-react';
-import { useForm } from 'react-hook-form';
-import api from '../services/api';
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Star, Quote, ChevronLeft, ChevronRight, Send } from "lucide-react";
+import { useForm } from "react-hook-form";
+import api from "../services/api";
 
 interface Testimonial {
   id: string;
@@ -11,67 +11,81 @@ interface Testimonial {
   rating?: number;
   text: string;
   photo?: string;
-  approved: boolean;
+  approved: string | boolean;
   createdAt: string;
 }
 
 interface TestimonialForm {
+  readonly id: string;
   name: string;
   org: string;
   rating: number;
   text: string;
-  photo?: FileList;
+  photo?: string | FileList;
+  approved: string | boolean;
+  createdAt: string;
 }
 
 const Testimonials: React.FC = () => {
-  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([
+    {
+      id: "1",
+      name: "Sarah Johnson",
+      org: "Tech Innovations Ltd",
+      rating: 5,
+      text: "SRD Consulting transformed our communication strategy completely. Their strategic approach and attention to detail helped us navigate a complex product launch successfully.",
+      photo:
+        "https://images.pexels.com/photos/3184339/pexels-photo-3184339.jpeg?auto=compress&cs=tinysrgb&w=400",
+      approved: true,
+      createdAt: new Date().toISOString(),
+    },
+    {
+      id: "2",
+      name: "Michael Chen",
+      org: "Global Manufacturing Corp",
+      rating: 5,
+      text: "During our crisis situation, SRD provided exceptional guidance and support. Their crisis communication expertise helped us maintain stakeholder confidence.",
+      photo:
+        "https://images.pexels.com/photos/3184394/pexels-photo-3184394.jpeg?auto=compress&cs=tinysrgb&w=400",
+      approved: true,
+      createdAt: new Date().toISOString(),
+    },
+    {
+      id: "3",
+      name: "Emily Rodriguez",
+      org: "Healthcare Solutions Inc",
+      rating: 5,
+      text: "The team at SRD helped us develop a compelling brand story that resonated with our audience. Their creativity and strategic thinking are unmatched.",
+      photo:
+        "https://images.pexels.com/photos/3184418/pexels-photo-3184418.jpeg?auto=compress&cs=tinysrgb&w=400",
+      approved: true,
+      createdAt: new Date().toISOString(),
+    },
+  ]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<TestimonialForm>();
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<TestimonialForm>();
 
   useEffect(() => {
     const fetchTestimonials = async () => {
       try {
-        const response = await api.get('/testimonials');
-        setTestimonials(response.data.filter((t: Testimonial) => t.approved));
+        const response = await api.get(
+          "https://api.sheetbest.com/sheets/188fec19-5dd2-480c-9531-269673512323"
+        );
+        setTestimonials(
+          response.data.filter((t: Testimonial) => t.approved === "TRUE")
+        );
       } catch (error) {
-        console.error('Failed to fetch testimonials:', error);
+        console.error("Failed to fetch testimonials:", error);
         // Fallback demo testimonials
-        setTestimonials([
-          {
-            id: '1',
-            name: 'Sarah Johnson',
-            org: 'Tech Innovations Ltd',
-            rating: 5,
-            text: 'SRD Consulting transformed our communication strategy completely. Their strategic approach and attention to detail helped us navigate a complex product launch successfully.',
-            photo: 'https://images.pexels.com/photos/3184339/pexels-photo-3184339.jpeg?auto=compress&cs=tinysrgb&w=400',
-            approved: true,
-            createdAt: new Date().toISOString()
-          },
-          {
-            id: '2',
-            name: 'Michael Chen',
-            org: 'Global Manufacturing Corp',
-            rating: 5,
-            text: 'During our crisis situation, SRD provided exceptional guidance and support. Their crisis communication expertise helped us maintain stakeholder confidence.',
-            photo: 'https://images.pexels.com/photos/3184394/pexels-photo-3184394.jpeg?auto=compress&cs=tinysrgb&w=400',
-            approved: true,
-            createdAt: new Date().toISOString()
-          },
-          {
-            id: '3',
-            name: 'Emily Rodriguez',
-            org: 'Healthcare Solutions Inc',
-            rating: 5,
-            text: 'The team at SRD helped us develop a compelling brand story that resonated with our audience. Their creativity and strategic thinking are unmatched.',
-            photo: 'https://images.pexels.com/photos/3184418/pexels-photo-3184418.jpeg?auto=compress&cs=tinysrgb&w=400',
-            approved: true,
-            createdAt: new Date().toISOString()
-          }
-        ]);
       } finally {
         setLoading(false);
       }
@@ -83,29 +97,64 @@ const Testimonials: React.FC = () => {
   const onSubmit = async (data: TestimonialForm) => {
     setSubmitting(true);
     try {
-      const formData = new FormData();
-      formData.append('name', data.name);
-      formData.append('org', data.org);
-      formData.append('rating', data.rating.toString());
-      formData.append('text', data.text);
-      
+      let photoUrl = "";
+      let uuid = "srd-" + crypto.randomUUID();
+
+      // Handle photo upload if provided
       if (data.photo && data.photo[0]) {
-        formData.append('photo', data.photo[0]);
+        const photoFile = new FormData();
+        photoFile.append("file", data.photo[0]);
+        photoFile.append("upload_preset", "testimonials");
+        photoFile.append("folder", "srdtestimonails");
+
+        const uploadResponse = await fetch(
+          "https://api.cloudinary.com/v1_1/dbvcdwf10/image/upload",
+          {
+            method: "POST",
+            body: photoFile,
+          }
+        );
+        const photoData = await uploadResponse.json();
+
+        if (uploadResponse.ok) {
+          photoUrl = photoData.secure_url;
+        } else {
+          console.error("Failed to upload photo:", photoData);
+        }
       }
 
-      await api.post('/testimonials', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const payload: TestimonialForm = {
+        id: uuid,
+        name: data.name,
+        org: data.org,
+        rating: data.rating,
+        text: data.text,
+        createdAt: new Date().toISOString(),
+        approved: false, //default to false until approved by admin
+        photo: photoUrl,
+      };
+
+      // Submit the testimonial to the API
+      const response = await api.post(
+        "https://api.sheetbest.com/sheets/188fec19-5dd2-480c-9531-269673512323",
+        payload,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      if (response.status !== 200) {
+        alert("failed to submit testimonial");
+      }
 
       setSubmitted(true);
-      reset();
     } catch (error) {
-      console.error('Failed to submit testimonial:', error);
-      alert('Failed to submit testimonial. Please try again.');
+      console.error("Failed to submit testimonial:", error);
+      alert("Failed to submit testimonial. Please try again.");
     } finally {
       setSubmitting(false);
+      reset();
     }
   };
 
@@ -114,14 +163,18 @@ const Testimonials: React.FC = () => {
   };
 
   const prevTestimonial = () => {
-    setCurrentIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
+    setCurrentIndex(
+      (prev) => (prev - 1 + testimonials.length) % testimonials.length
+    );
   };
 
   const renderStars = (rating: number) => {
     return Array.from({ length: 5 }, (_, i) => (
       <Star
         key={i}
-        className={`w-5 h-5 ${i < rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+        className={`w-5 h-5 ${
+          i < rating ? "text-yellow-400 fill-current" : "text-gray-300"
+        }`}
       />
     ));
   };
@@ -148,7 +201,7 @@ const Testimonials: React.FC = () => {
               Client <span className="text-primary">Success Stories</span>
             </h1>
             <p className="text-xl text-gray max-w-3xl mx-auto">
-              Hear from our clients about how SRD Consulting has helped them 
+              Hear from our clients about how SRD Consulting has helped them
               achieve their communication goals and drive meaningful results.
             </p>
           </motion.div>
@@ -170,21 +223,21 @@ const Testimonials: React.FC = () => {
                   className="bg-gray-50 rounded-2xl p-8 md:p-12 text-center"
                 >
                   <Quote className="w-12 h-12 text-primary mx-auto mb-6" />
-                  
+
                   <p className="text-xl md:text-2xl text-dark mb-8 leading-relaxed italic">
                     "{testimonials[currentIndex].text}"
                   </p>
-                  
+
                   {testimonials[currentIndex].rating && (
                     <div className="flex justify-center mb-6">
                       {renderStars(testimonials[currentIndex].rating!)}
                     </div>
                   )}
-                  
+
                   <div className="flex items-center justify-center">
                     {testimonials[currentIndex].photo && (
-                      <img 
-                        src={testimonials[currentIndex].photo} 
+                      <img
+                        src={testimonials[currentIndex].photo}
                         alt={testimonials[currentIndex].name}
                         className="w-16 h-16 rounded-full object-cover mr-4"
                       />
@@ -194,7 +247,9 @@ const Testimonials: React.FC = () => {
                         {testimonials[currentIndex].name}
                       </h4>
                       {testimonials[currentIndex].org && (
-                        <p className="text-gray">{testimonials[currentIndex].org}</p>
+                        <p className="text-gray">
+                          {testimonials[currentIndex].org}
+                        </p>
                       )}
                     </div>
                   </div>
@@ -227,7 +282,7 @@ const Testimonials: React.FC = () => {
                       key={index}
                       onClick={() => setCurrentIndex(index)}
                       className={`w-3 h-3 rounded-full transition-colors ${
-                        index === currentIndex ? 'bg-primary' : 'bg-gray-300'
+                        index === currentIndex ? "bg-primary" : "bg-gray-300"
                       }`}
                     />
                   ))}
@@ -252,7 +307,8 @@ const Testimonials: React.FC = () => {
               Share Your Experience
             </h2>
             <p className="text-xl text-gray">
-              We'd love to hear about your experience working with SRD Consulting
+              We'd love to hear about your experience working with SRD
+              Consulting
             </p>
           </motion.div>
 
@@ -267,8 +323,8 @@ const Testimonials: React.FC = () => {
               </div>
               <h3 className="text-2xl font-bold text-dark mb-4">Thank You!</h3>
               <p className="text-gray mb-6">
-                Your testimonial has been submitted and is awaiting approval. 
-                We appreciate you taking the time to share your experience.
+                Your testimonial has been submitted and is awaiting approval. We
+                appreciate you taking the time to share your experience.
               </p>
               <button
                 onClick={() => setSubmitted(false)}
@@ -292,12 +348,14 @@ const Testimonials: React.FC = () => {
                       Full Name *
                     </label>
                     <input
-                      {...register('name', { required: 'Name is required' })}
+                      {...register("name", { required: "Name is required" })}
                       className="input-field"
                       placeholder="Your full name"
                     />
                     {errors.name && (
-                      <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.name.message}
+                      </p>
                     )}
                   </div>
 
@@ -306,7 +364,7 @@ const Testimonials: React.FC = () => {
                       Organization
                     </label>
                     <input
-                      {...register('org')}
+                      {...register("org")}
                       className="input-field"
                       placeholder="Your organization"
                     />
@@ -318,7 +376,10 @@ const Testimonials: React.FC = () => {
                     Rating *
                   </label>
                   <select
-                    {...register('rating', { required: 'Rating is required', valueAsNumber: true })}
+                    {...register("rating", {
+                      required: "Rating is required",
+                      valueAsNumber: true,
+                    })}
                     className="input-field"
                   >
                     <option value="">Select a rating</option>
@@ -329,7 +390,9 @@ const Testimonials: React.FC = () => {
                     <option value={1}>1 Star - Poor</option>
                   </select>
                   {errors.rating && (
-                    <p className="text-red-500 text-sm mt-1">{errors.rating.message}</p>
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.rating.message}
+                    </p>
                   )}
                 </div>
 
@@ -338,13 +401,17 @@ const Testimonials: React.FC = () => {
                     Your Testimonial *
                   </label>
                   <textarea
-                    {...register('text', { required: 'Testimonial is required' })}
+                    {...register("text", {
+                      required: "Testimonial is required",
+                    })}
                     rows={5}
                     className="input-field resize-none"
                     placeholder="Share your experience working with SRD Consulting..."
                   />
                   {errors.text && (
-                    <p className="text-red-500 text-sm mt-1">{errors.text.message}</p>
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.text.message}
+                    </p>
                   )}
                 </div>
 
@@ -353,7 +420,7 @@ const Testimonials: React.FC = () => {
                     Photo (Optional)
                   </label>
                   <input
-                    {...register('photo')}
+                    {...register("photo")}
                     type="file"
                     accept="image/*"
                     className="input-field"
@@ -368,7 +435,7 @@ const Testimonials: React.FC = () => {
                   disabled={submitting}
                   className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {submitting ? 'Submitting...' : 'Submit Testimonial'}
+                  {submitting ? "Submitting..." : "Submit Testimonial"}
                 </button>
               </form>
             </motion.div>

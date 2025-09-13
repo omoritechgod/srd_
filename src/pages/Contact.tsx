@@ -1,8 +1,16 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { useForm } from 'react-hook-form';
-import { Mail, Phone, MapPin, Send, Instagram, MessageCircle, Linkedin } from 'lucide-react';
-import api from '../services/api';
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import { useForm } from "react-hook-form";
+import {
+  Mail,
+  Phone,
+  MapPin,
+  Send,
+  Instagram,
+  MessageCircle,
+  Linkedin,
+} from "lucide-react";
+import api from "../services/api";
 
 interface ContactForm {
   name: string;
@@ -10,23 +18,46 @@ interface ContactForm {
   phone: string;
   subject: string;
   message: string;
+  time_stamp: string;
 }
-
+const currentDate = new Date();
 const Contact: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<ContactForm>();
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<ContactForm>({
+    defaultValues: {
+      name: "",
+      email: "",
+      phone: "",
+      subject: "",
+      message: "",
+      time_stamp: `${currentDate.getDate()}-${
+        currentDate.getMonth() + 1
+      }-${currentDate.getFullYear()} ${currentDate.getHours()}:${currentDate.getMinutes()}`,
+    },
+  });
 
   const onSubmit = async (data: ContactForm) => {
     setSubmitting(true);
     try {
-      await api.post('/contact', data);
+      const response = await api.post(
+        "https://api.sheetbest.com/sheets/2095acbb-5929-42b1-8335-7fec8ae12816",
+        data
+      );
+      if (response.status !== 200) {
+        alert("Failed to submit contact form");
+      }
       setSubmitted(true);
       reset();
     } catch (error) {
-      console.error('Failed to submit contact form:', error);
-      alert('Failed to send message. Please try again.');
+      console.error("Failed to submit contact form:", error);
+      alert("Failed to send message. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -35,34 +66,34 @@ const Contact: React.FC = () => {
   const fadeInUp = {
     initial: { opacity: 0, y: 60 },
     animate: { opacity: 1, y: 0 },
-    transition: { duration: 0.6 }
+    transition: { duration: 0.6 },
   };
 
   const contactInfo = [
     {
       icon: Mail,
-      title: 'Email Us',
-      details: 'info@srdconsulting.com',
-      description: 'Send us an email anytime'
+      title: "Email Us",
+      details: "info@srdconsultingltd.com",
+      description: "Send us an email anytime",
     },
     {
       icon: Phone,
-      title: 'Call Us',
-      details: '+234 XXX XXX XXXX',
-      description: 'Mon-Fri from 8am to 6pm'
+      title: "Call Us",
+      details: "+234 816 504 5779",
+      description: "Mon-Fri from 8am to 6pm",
     },
     {
       icon: MapPin,
-      title: 'Visit Us',
-      details: 'Lagos, Nigeria',
-      description: 'Come say hello at our office'
-    }
+      title: "Visit Us",
+      details: "Lagos, Nigeria",
+      description: "Come say hello at our office",
+    },
   ];
 
   const socialLinks = [
-    { icon: Instagram, href: '#', label: 'Instagram' },
-    { icon: MessageCircle, href: '#', label: 'WhatsApp' },
-    { icon: Linkedin, href: '#', label: 'LinkedIn' }
+    { icon: Instagram, href: "#", label: "Instagram" },
+    { icon: MessageCircle, href: "#", label: "WhatsApp" },
+    { icon: Linkedin, href: "#", label: "LinkedIn" },
   ];
 
   return (
@@ -79,7 +110,7 @@ const Contact: React.FC = () => {
               Get In <span className="text-primary">Touch</span>
             </h1>
             <p className="text-xl text-gray max-w-3xl mx-auto">
-              Ready to start your communications journey? We're here to help. 
+              Ready to start your communications journey? We're here to help.
               Reach out to discuss your project or ask any questions.
             </p>
           </motion.div>
@@ -101,8 +132,12 @@ const Contact: React.FC = () => {
                 <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <info.icon className="w-8 h-8 text-primary" />
                 </div>
-                <h3 className="text-xl font-semibold text-dark mb-2">{info.title}</h3>
-                <p className="text-lg text-primary font-medium mb-1">{info.details}</p>
+                <h3 className="text-xl font-semibold text-dark mb-2">
+                  {info.title}
+                </h3>
+                <p className="text-lg text-primary font-medium mb-1">
+                  {info.details}
+                </p>
                 <p className="text-gray text-sm">{info.description}</p>
               </div>
             ))}
@@ -122,9 +157,12 @@ const Contact: React.FC = () => {
                   <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                     <Send className="w-8 h-8 text-green-600" />
                   </div>
-                  <h3 className="text-2xl font-bold text-dark mb-4">Message Sent!</h3>
+                  <h3 className="text-2xl font-bold text-dark mb-4">
+                    Message Sent!
+                  </h3>
                   <p className="text-gray mb-6">
-                    Thank you for reaching out. We'll get back to you within 24 hours.
+                    Thank you for reaching out. We'll get back to you within 24
+                    hours.
                   </p>
                   <button
                     onClick={() => setSubmitted(false)}
@@ -135,8 +173,10 @@ const Contact: React.FC = () => {
                 </div>
               ) : (
                 <div className="bg-white rounded-2xl shadow-lg p-8">
-                  <h2 className="text-2xl font-bold text-dark mb-6">Send us a Message</h2>
-                  
+                  <h2 className="text-2xl font-bold text-dark mb-6">
+                    Send us a Message
+                  </h2>
+
                   <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
@@ -144,12 +184,16 @@ const Contact: React.FC = () => {
                           Name *
                         </label>
                         <input
-                          {...register('name', { required: 'Name is required' })}
+                          {...register("name", {
+                            required: "Name is required",
+                          })}
                           className="input-field"
                           placeholder="Your name"
                         />
                         {errors.name && (
-                          <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
+                          <p className="text-red-500 text-sm mt-1">
+                            {errors.name.message}
+                          </p>
                         )}
                       </div>
 
@@ -158,19 +202,21 @@ const Contact: React.FC = () => {
                           Email *
                         </label>
                         <input
-                          {...register('email', { 
-                            required: 'Email is required',
+                          {...register("email", {
+                            required: "Email is required",
                             pattern: {
                               value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                              message: 'Invalid email address'
-                            }
+                              message: "Invalid email address",
+                            },
                           })}
                           type="email"
                           className="input-field"
                           placeholder="your.email@example.com"
                         />
                         {errors.email && (
-                          <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
+                          <p className="text-red-500 text-sm mt-1">
+                            {errors.email.message}
+                          </p>
                         )}
                       </div>
                     </div>
@@ -181,11 +227,18 @@ const Contact: React.FC = () => {
                           Phone
                         </label>
                         <input
-                          {...register('phone')}
+                          {...register("phone", {
+                            required: "Phone number is required",
+                          })}
                           type="tel"
                           className="input-field"
-                          placeholder="+234 XXX XXX XXXX"
+                          placeholder="+234 816 504 5779"
                         />
+                        {errors.phone && (
+                          <p className="text-red-500 text-sm mt-1">
+                            {errors.phone.message}
+                          </p>
+                        )}
                       </div>
 
                       <div>
@@ -193,12 +246,16 @@ const Contact: React.FC = () => {
                           Subject *
                         </label>
                         <input
-                          {...register('subject', { required: 'Subject is required' })}
+                          {...register("subject", {
+                            required: "Subject is required",
+                          })}
                           className="input-field"
                           placeholder="What's this about?"
                         />
                         {errors.subject && (
-                          <p className="text-red-500 text-sm mt-1">{errors.subject.message}</p>
+                          <p className="text-red-500 text-sm mt-1">
+                            {errors.subject.message}
+                          </p>
                         )}
                       </div>
                     </div>
@@ -208,13 +265,17 @@ const Contact: React.FC = () => {
                         Message *
                       </label>
                       <textarea
-                        {...register('message', { required: 'Message is required' })}
+                        {...register("message", {
+                          required: "Message is required",
+                        })}
                         rows={5}
                         className="input-field resize-none"
                         placeholder="Tell us about your project or how we can help..."
                       />
                       {errors.message && (
-                        <p className="text-red-500 text-sm mt-1">{errors.message.message}</p>
+                        <p className="text-red-500 text-sm mt-1">
+                          {errors.message.message}
+                        </p>
                       )}
                     </div>
 
@@ -252,14 +313,18 @@ const Contact: React.FC = () => {
               <div className="bg-gray-200 rounded-2xl h-64 flex items-center justify-center">
                 <div className="text-center">
                   <MapPin className="w-12 h-12 text-gray mx-auto mb-4" />
-                  <p className="text-gray">Interactive map will be embedded here</p>
+                  <p className="text-gray">
+                    Interactive map will be embedded here
+                  </p>
                   <p className="text-sm text-gray mt-2">Lagos, Nigeria</p>
                 </div>
               </div>
 
               {/* Social Media */}
               <div className="bg-white rounded-2xl shadow-lg p-8">
-                <h3 className="text-xl font-semibold text-dark mb-6">Follow Us</h3>
+                <h3 className="text-xl font-semibold text-dark mb-6">
+                  Follow Us
+                </h3>
                 <div className="flex space-x-4">
                   {socialLinks.map((social, index) => (
                     <a
@@ -273,7 +338,7 @@ const Contact: React.FC = () => {
                   ))}
                 </div>
                 <p className="text-gray mt-4">
-                  Stay connected with us on social media for the latest updates, 
+                  Stay connected with us on social media for the latest updates,
                   insights, and behind-the-scenes content.
                 </p>
               </div>

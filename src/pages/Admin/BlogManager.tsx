@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
-import { Plus, Edit, Trash2, Save, X, Eye, ArrowLeft } from 'lucide-react';
+import { Plus, Edit, Trash2, Save, X, Eye, ArrowLeft, BookOpen } from 'lucide-react';
 import { format } from 'date-fns';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';

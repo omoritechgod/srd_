@@ -8,7 +8,8 @@ import {
   FileText,
   CreditCard,
   Users,
-  BarChart3
+  BarChart3,
+  ReceiptText
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import api from '../../services/api';
@@ -83,6 +84,20 @@ const Dashboard: React.FC = () => {
       icon: BarChart3,
       href: '/admin/analytics',
       color: 'bg-indigo-500'
+    },
+    {
+      title: 'Receipt Management',
+      description: 'View, manage, create client receipts',
+      icon: ReceiptText,
+      href: '/admin/receipts',
+      color: 'bg-gray-700'
+    },
+    {
+      title: 'Contact Management',
+      description: 'Manage client contacts',
+      icon: Users,
+      href: '/admin/contacts',
+      color: 'bg-red-300'
     }
   ];
 

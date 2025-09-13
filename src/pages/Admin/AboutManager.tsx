@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { useForm } from 'react-hook-form';
-import { Save, Upload, X, ArrowLeft } from 'lucide-react';
-import api from '../../services/api';
+import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import { useForm } from "react-hook-form";
+import { Save, Upload, X, ArrowLeft } from "lucide-react";
+import api from "../../services/api";
 
 interface AboutContent {
   content: string;
@@ -11,17 +11,23 @@ interface AboutContent {
 }
 
 interface AboutForm {
+  id: number | string;
   content: string;
-  image?: FileList;
+  image?: string | FileList;
 }
 
 const AboutManager: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [currentImage, setCurrentImage] = useState<string>('');
-  const [previewImage, setPreviewImage] = useState<string>('');
+  const [currentImage, setCurrentImage] = useState<string>("");
+  const [previewImage, setPreviewImage] = useState<string>("");
 
-  const { register, handleSubmit, setValue, formState: { errors } } = useForm<AboutForm>();
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+  } = useForm<AboutForm>();
 
   useEffect(() => {
     fetchAboutContent();
@@ -29,20 +35,23 @@ const AboutManager: React.FC = () => {
 
   const fetchAboutContent = async () => {
     try {
-      const response = await api.get('/about');
+      const response = await api.get("https://api.sheetbest.com/sheets/6743decf-22be-4c3b-9b1f-00a733e5da50");
       const data = response.data;
-      setValue('content', data.content);
-      setCurrentImage(data.image || '');
+      setValue("content", data.content[0]);
+      setCurrentImage(data.image[0] || "");
     } catch (error) {
-      console.error('Failed to fetch about content:', error);
+      console.error("Failed to fetch about content:", error);
       // Set default content
-      setValue('content', `SRD Consulting Ltd is a premier communications and public relations firm dedicated to helping organizations navigate the complex landscape of modern communication.
+      setValue(
+        "content",
+        `SRD Consulting Ltd is a premier communications and public relations firm dedicated to helping organizations navigate the complex landscape of modern communication.
 
 Founded on the principles of strategic thinking, creative execution, and measurable results, we provide tailored solutions that drive meaningful engagement and business growth.
 
 Our team of seasoned professionals brings together decades of experience in media relations, crisis communication, brand storytelling, and strategic consultancy. We understand that every organization has a unique story to tell, and we're here to help you tell it effectively.
 
-Whether you're looking to build brand awareness, manage a crisis, or develop a comprehensive communication strategy, SRD Consulting is your trusted partner in achieving communication excellence.`);
+Whether you're looking to build brand awareness, manage a crisis, or develop a comprehensive communication strategy, SRD Consulting is your trusted partner in achieving communication excellence.`
+      );
     } finally {
       setLoading(false);
     }
@@ -51,23 +60,47 @@ Whether you're looking to build brand awareness, manage a crisis, or develop a c
   const onSubmit = async (data: AboutForm) => {
     setSubmitting(true);
     try {
-      const formData = new FormData();
-      formData.append('content', data.content);
-      
+      let imageUrl = "";
+
       if (data.image && data.image[0]) {
-        formData.append('image', data.image[0]);
+        const formData = new FormData();
+        formData.append("file", data.image[0]);
+        formData.append("upload_preset", "testimonials");
+        formData.append("folder", "srdtestimonails");
+
+        const response = await fetch(
+          "https://api.cloudinary.com/v1_1/dbvcdwf10/image/upload",
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
+        const photoData = await response.json();
+
+        if (response.ok) {
+          imageUrl = photoData.secure_url;
+        }else{
+          console.error("Image upload failed:", response.statusText);
+        }
       }
 
-      await api.put('/about', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const payload: AboutForm = {
+        id: 1,
+        content: data.content,
+        image: imageUrl || currentImage,
+      }
+      console.log(payload,data.image && data.image[0])
 
-      alert('About content updated successfully!');
-      await fetchAboutContent();
-      setPreviewImage('');
+      const req = await api.patch(`https://api.sheetbest.com/sheets/6743decf-22be-4c3b-9b1f-00a733e5da50/id/1`,payload);
+
+      if (req.status === 200) {
+        alert("About content updated successfully!");
+        await fetchAboutContent();
+        setPreviewImage("");
+      }
     } catch (error) {
-      console.error('Failed to update about content:', error);
-      alert('Failed to update content. Please try again.');
+      console.error("Failed to update about content:", error);
+      alert("Failed to update content. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -85,8 +118,8 @@ Whether you're looking to build brand awareness, manage a crisis, or develop a c
   };
 
   const removePreviewImage = () => {
-    setPreviewImage('');
-    setValue('image', undefined);
+    setPreviewImage("");
+    setValue("image", undefined);
   };
 
   if (loading) {
@@ -104,15 +137,19 @@ Whether you're looking to build brand awareness, manage a crisis, or develop a c
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div>
-              <Link 
+              <Link
                 to="/admin/dashboard"
                 className="inline-flex items-center text-gray hover:text-primary mb-2 transition-colors"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Dashboard
               </Link>
-              <h1 className="text-2xl font-bold text-dark">About Page Management</h1>
-              <p className="text-gray">Update about us content and banner image</p>
+              <h1 className="text-2xl font-bold text-dark">
+                About Page Management
+              </h1>
+              <p className="text-gray">
+                Update about us content and banner image
+              </p>
             </div>
           </div>
         </div>
@@ -131,16 +168,19 @@ Whether you're looking to build brand awareness, manage a crisis, or develop a c
                 About Us Content
               </label>
               <textarea
-                {...register('content', { required: 'Content is required' })}
+                {...register("content", { required: "Content is required" })}
                 rows={15}
                 className="input-field resize-none font-mono text-sm"
                 placeholder="Enter the about us content..."
               />
               {errors.content && (
-                <p className="text-red-500 text-sm mt-2">{errors.content.message}</p>
+                <p className="text-red-500 text-sm mt-2">
+                  {errors.content.message}
+                </p>
               )}
               <p className="text-sm text-gray mt-2">
-                Use line breaks to separate paragraphs. The content will be displayed as formatted text.
+                Use line breaks to separate paragraphs. The content will be
+                displayed as formatted text.
               </p>
             </div>
 
@@ -149,13 +189,13 @@ Whether you're looking to build brand awareness, manage a crisis, or develop a c
               <label className="block text-lg font-semibold text-dark mb-4">
                 Banner Image
               </label>
-              
+
               {/* Current Image */}
               {currentImage && !previewImage && (
                 <div className="mb-4">
                   <p className="text-sm text-gray mb-2">Current Image:</p>
-                  <img 
-                    src={currentImage} 
+                  <img
+                    src={currentImage}
                     alt="Current about banner"
                     className="w-full max-w-md h-48 object-cover rounded-lg"
                   />
@@ -175,8 +215,8 @@ Whether you're looking to build brand awareness, manage a crisis, or develop a c
                       <X className="w-5 h-5" />
                     </button>
                   </div>
-                  <img 
-                    src={previewImage} 
+                  <img
+                    src={previewImage}
                     alt="Preview"
                     className="w-full max-w-md h-48 object-cover rounded-lg"
                   />
@@ -187,13 +227,16 @@ Whether you're looking to build brand awareness, manage a crisis, or develop a c
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary transition-colors">
                 <Upload className="w-8 h-8 text-gray mx-auto mb-2" />
                 <p className="text-gray mb-2">
-                  {currentImage ? 'Upload new banner image' : 'Upload banner image'}
+                  {currentImage
+                    ? "Upload new banner image"
+                    : "Upload banner image"}
                 </p>
                 <input
-                  {...register('image')}
+                  {...register("image", {
+                    onChange: handleImageChange
+                  })}
                   type="file"
                   accept="image/*"
-                  onChange={handleImageChange}
                   className="hidden"
                   id="image-upload"
                 />
@@ -245,16 +288,17 @@ Whether you're looking to build brand awareness, manage a crisis, or develop a c
               This is how your content will appear on the About page:
             </p>
             <div className="bg-white rounded-lg p-6">
-              <a 
-                href="/about" 
-                target="_blank" 
+              <a
+                href="/about"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="btn-secondary inline-block mb-4"
               >
                 View Live About Page
               </a>
               <p className="text-gray">
-                Click the button above to see the current live version of your About page.
+                Click the button above to see the current live version of your
+                About page.
               </p>
             </div>
           </div>

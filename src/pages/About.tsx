@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Target, Eye, Heart } from 'lucide-react';
-import api from '../services/api';
+import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { Target, Eye, Heart } from "lucide-react";
+import api from "../services/api";
 
 interface AboutContent {
   content: string;
@@ -10,16 +10,19 @@ interface AboutContent {
 
 const About: React.FC = () => {
   const [aboutContent, setAboutContent] = useState<AboutContent>({
-    content: 'Loading...'
+    content: "Loading...",
   });
 
   useEffect(() => {
     const fetchAboutContent = async () => {
       try {
-        const response = await api.get('/about');
-        setAboutContent(response.data);
+        const response = await api.get(
+          "https://api.sheetbest.com/sheets/6743decf-22be-4c3b-9b1f-00a733e5da50"
+        );
+        console.log("response about content:", response.data[0]);
+        setAboutContent(response.data[0]);
       } catch (error) {
-        console.error('Failed to fetch about content:', error);
+        console.error("Failed to fetch about content:", error);
         // Fallback content
         setAboutContent({
           content: `SRD Consulting Ltd is a premier communications and public relations firm dedicated to helping organizations navigate the complex landscape of modern communication. 
@@ -29,7 +32,8 @@ Founded on the principles of strategic thinking, creative execution, and measura
 Our team of seasoned professionals brings together decades of experience in media relations, crisis communication, brand storytelling, and strategic consultancy. We understand that every organization has a unique story to tell, and we're here to help you tell it effectively.
 
 Whether you're looking to build brand awareness, manage a crisis, or develop a comprehensive communication strategy, SRD Consulting is your trusted partner in achieving communication excellence.`,
-          image: 'https://images.pexels.com/photos/3184465/pexels-photo-3184465.jpeg?auto=compress&cs=tinysrgb&w=800'
+          image:
+            "https://images.pexels.com/photos/3184465/pexels-photo-3184465.jpeg?auto=compress&cs=tinysrgb&w=800",
         });
       }
     };
@@ -40,33 +44,36 @@ Whether you're looking to build brand awareness, manage a crisis, or develop a c
   const fadeInUp = {
     initial: { opacity: 0, y: 60 },
     animate: { opacity: 1, y: 0 },
-    transition: { duration: 0.6 }
+    transition: { duration: 0.6 },
   };
 
   const staggerContainer = {
     animate: {
       transition: {
-        staggerChildren: 0.2
-      }
-    }
+        staggerChildren: 0.2,
+      },
+    },
   };
 
   const values = [
     {
       icon: Target,
-      title: 'Mission',
-      description: 'To empower organizations with strategic communications that drive meaningful connections and measurable results.'
+      title: "Mission",
+      description:
+        "To empower organizations with strategic communications that drive meaningful connections and measurable results.",
     },
     {
       icon: Eye,
-      title: 'Vision',
-      description: 'To be the leading communications consultancy that transforms how organizations connect with their audiences.'
+      title: "Vision",
+      description:
+        "To be the leading communications consultancy that transforms how organizations connect with their audiences.",
     },
     {
       icon: Heart,
-      title: 'Values',
-      description: 'Integrity, Excellence, Innovation, and Client-Centricity guide everything we do.'
-    }
+      title: "Values",
+      description:
+        "Integrity, Excellence, Innovation, and Client-Centricity guide everything we do.",
+    },
   ];
 
   return (
@@ -84,8 +91,8 @@ Whether you're looking to build brand awareness, manage a crisis, or develop a c
               About <span className="text-primary">SRD Consulting</span>
             </h1>
             <p className="text-xl text-gray max-w-3xl mx-auto">
-              Strategic communications experts dedicated to helping organizations 
-              tell their stories and build meaningful connections.
+              Strategic communications experts dedicated to helping
+              organizations tell their stories and build meaningful connections.
             </p>
           </motion.div>
 
@@ -96,11 +103,7 @@ Whether you're looking to build brand awareness, manage a crisis, or develop a c
               transition={{ duration: 0.8, delay: 0.2 }}
             >
               <div className="prose prose-lg max-w-none">
-                {aboutContent.content.split('\n\n').map((paragraph, index) => (
-                  <p key={index} className="text-gray mb-4 leading-relaxed">
-                    {paragraph}
-                  </p>
-                ))}
+               <p className="text-gray-700 mb-4 leading-relaxed whitespace-pre-line">{aboutContent.content}</p>
               </div>
             </motion.div>
 
@@ -111,9 +114,12 @@ Whether you're looking to build brand awareness, manage a crisis, or develop a c
               className="relative"
             >
               <div className="relative z-10">
-                <img 
-                  src={aboutContent.image || 'https://images.pexels.com/photos/3184465/pexels-photo-3184465.jpeg?auto=compress&cs=tinysrgb&w=800'} 
-                  alt="About SRD Consulting" 
+                <img
+                  src={
+                    aboutContent.image ||
+                    "https://images.pexels.com/photos/3184465/pexels-photo-3184465.jpeg?auto=compress&cs=tinysrgb&w=800"
+                  }
+                  alt="About SRD Consulting"
                   className="rounded-2xl shadow-2xl w-full"
                 />
               </div>
@@ -137,7 +143,8 @@ Whether you're looking to build brand awareness, manage a crisis, or develop a c
               Our Foundation
             </h2>
             <p className="text-xl text-gray max-w-3xl mx-auto">
-              Built on strong principles that guide our approach to every client relationship and project.
+              Built on strong principles that guide our approach to every client
+              relationship and project.
             </p>
           </motion.div>
 
@@ -149,11 +156,17 @@ Whether you're looking to build brand awareness, manage a crisis, or develop a c
             className="grid grid-cols-1 md:grid-cols-3 gap-8"
           >
             {values.map((value, index) => (
-              <motion.div key={index} variants={fadeInUp} className="card p-8 text-center">
+              <motion.div
+                key={index}
+                variants={fadeInUp}
+                className="card p-8 text-center"
+              >
                 <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
                   <value.icon className="w-8 h-8 text-primary" />
                 </div>
-                <h3 className="text-xl font-semibold text-dark mb-4">{value.title}</h3>
+                <h3 className="text-xl font-semibold text-dark mb-4">
+                  {value.title}
+                </h3>
                 <p className="text-gray">{value.description}</p>
               </motion.div>
             ))}
@@ -174,13 +187,15 @@ Whether you're looking to build brand awareness, manage a crisis, or develop a c
               Expert Team
             </h2>
             <p className="text-xl text-gray mb-8 max-w-3xl mx-auto">
-              Our diverse team of communications professionals brings together decades of experience 
-              across various industries and specializations.
+              Our diverse team of communications professionals brings together
+              decades of experience across various industries and
+              specializations.
             </p>
             <div className="bg-white rounded-2xl p-12 shadow-lg">
               <p className="text-lg text-gray italic">
-                "Team profiles and detailed bios will be added here as the organization grows. 
-                Our current focus is on delivering exceptional results for our clients."
+                "Team profiles and detailed bios will be added here as the
+                organization grows. Our current focus is on delivering
+                exceptional results for our clients."
               </p>
             </div>
           </motion.div>

@@ -49,20 +49,23 @@ const Footer: React.FC = () => {
             <div className="space-y-2">
               <div className="flex items-center space-x-2">
                 <Mail size={16} />
-                <span className="text-gray">info@srdconsulting.com</span>
+                <span className="text-gray">info@srdconsultingltd.com</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Phone size={16} />
-                <span className="text-gray">+234 XXX XXX XXXX</span>
+                <span className="text-gray">+234 816 504 5779</span>
               </div>
             </div>
           </div>
         </div>
 
         <div className="border-t border-gray/20 mt-8 pt-8 text-center">
-          <p className="text-gray">
+          <span className="text-gray">
             © {new Date().getFullYear()} SRD Consulting Ltd. All rights reserved.
-          </p>
+          </span>
+          <span className="text-gray">
+            Developed by <a href="www.nexatrux.com" >Nexa Trux</a>
+          </span>
         </div>
       </div>
     </footer>

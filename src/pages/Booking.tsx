@@ -202,7 +202,7 @@ const Booking: React.FC = () => {
                       {...register('phone', { required: 'Phone number is required' })}
                       type="tel"
                       className="input-field"
-                      placeholder="+234 XXX XXX XXXX"
+                      placeholder="+234 816 504 5779"
                     />
                     {errors.phone && (
                       <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>

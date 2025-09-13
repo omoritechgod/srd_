@@ -60,7 +60,7 @@ const BookingManager: React.FC = () => {
         format(new Date(booking.date), 'yyyy-MM-dd HH:mm'),
         booking.status || 'pending',
         booking.notes || '',
-        format(new Date(booking.createdAt), 'yyyy-MM-dd')
+        format(new Date(booking.created_at), 'yyyy-MM-dd')
       ].map(field => `"${field}"`).join(','))
     ].join('\n');
 
@@ -270,7 +270,7 @@ const BookingManager: React.FC = () => {
                     {booking.file && (
                       <div className="mb-4">
                         <a 
-                          href={`http://127.0.0.1:8000/storage/${booking.file}`} 
+                          href={`https://mdoilandgas.com/srd/srdbackendd/public/storage/${booking.file}`} 
                           target="_blank" 
                           rel="noopener noreferrer"
                           className="text-primary hover:text-primary/80 text-sm inline-flex items-center"
