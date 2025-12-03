@@ -12,8 +12,12 @@ import Blog from './pages/Blog';
 import BlogPost from './pages/Blog/BlogPost';
 import Testimonials from './pages/Testimonials';
 import Booking from './pages/Booking';
+import BookingSuccess from './pages/BookingSuccess';
+import BookingFailed from './pages/BookingFailed';
 import Contact from './pages/Contact';
 import Courses from './pages/Courses';
+import TermsAndConditions from "./pages/TermsAndConditions"
+import PrivacyPolicy from "./pages/PrivacyPolicy"
 
 // Admin Pages
 import Login from './pages/Admin/Login';
@@ -67,12 +71,30 @@ function App() {
               <Booking />
             </Layout>
           } />
+          <Route path="/booking/success" element={<BookingSuccess />} />
+          <Route path="/booking/failed" element={<BookingFailed />} />
           <Route path="/contact" element={
             <Layout>
               <Contact />
             </Layout>
           } />
           <Route path="/courses" element={<Courses />} />
+                    <Route
+            path="/terms-and-conditions"
+            element={
+              <Layout>
+                <TermsAndConditions />
+              </Layout>
+            }
+          />
+          <Route
+            path="/privacy-policy"
+            element={
+              <Layout>
+                <PrivacyPolicy />
+              </Layout>
+            }
+          />
 
           {/* Admin Routes */}
           <Route path="/admin/login" element={<Login />} />

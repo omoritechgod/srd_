@@ -27,7 +27,7 @@ const Header: React.FC = () => {
             <img 
               src="/new_blapng.png" 
               alt="SRD Consulting" 
-              className="h-12 w-auto"
+              className="h-25 w-36"
             />
           </Link>
 

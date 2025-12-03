@@ -1,6 +1,6 @@
   import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://mdoilandgas.com/srd/srdbackendd/public/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://mdoilandgas.com/srd/backend/public/api';
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
