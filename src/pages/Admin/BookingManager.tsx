@@ -270,7 +270,7 @@ const BookingManager: React.FC = () => {
                     {booking.file && (
                       <div className="mb-4">
                         <a 
-                          href={booking.file.startsWith('http') ? booking.file : `https://mdoilandgas.com/srd/backend/public/storage/${booking.file}`}
+                          href={booking.file.startsWith('http') ? booking.file : `https://omoriapi.name.ng/srd/backend/public/storage/${booking.file}`}
                           target="_blank" 
                           rel="noopener noreferrer"
                           className="text-primary hover:text-primary/80 text-sm inline-flex items-center"

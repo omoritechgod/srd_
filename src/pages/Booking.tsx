@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import DatePicker from 'react-datepicker';
-import { Calendar, Clock, Send, Upload, X, ArrowLeft, ArrowRight, CheckCircle, AlertCircle, RefreshCw, FileText } from 'lucide-react';
+import { Calendar, Clock, Send, Upload, X, ArrowLeft, ArrowRight, CheckCircle, AlertCircle, RefreshCw, FileText, CreditCard } from 'lucide-react';
 import api from '../services/api';
 import 'react-datepicker/dist/react-datepicker.css';
 import { uploadToCloudinary, SRD_CLOUDINARY_CONFIG } from '../utils/cloudinaryUpload';
+import PaymentMethodSelector, { BankTransferSubmitData } from '../components/PaymentMethodSelector';
 
 interface BookingForm {
   name: string;
@@ -53,7 +54,7 @@ interface BookingError {
   suggestions?: TimeSlot[];
 }
 
-type BookingStep = 'date' | 'time' | 'details' | 'processing' | 'payment-init';
+type BookingStep = 'date' | 'time' | 'details' | 'payment-method' | 'processing' | 'payment-init' | 'bank-transfer-success';
 
 const Booking: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<BookingStep>('date');
@@ -68,6 +69,10 @@ const Booking: React.FC = () => {
   const [error, setError] = useState<string>('');
   const [bookingError, setBookingError] = useState<BookingError | null>(null);
   const [processingMessage, setProcessingMessage] = useState<string>('');
+  
+  // New state for booking ID after initial submission
+  const [createdBookingId, setCreatedBookingId] = useState<string>('');
+  const [formData, setFormData] = useState<BookingForm | null>(null);
 
   const { register, handleSubmit, reset, formState: { errors }, setValue } = useForm<BookingForm>();
 
@@ -131,6 +136,7 @@ const Booking: React.FC = () => {
     setBookingError(null);
   };
 
+  // Modified onSubmit - now creates booking and moves to payment method selection
   const onSubmit = async (data: BookingForm) => {
     if (!selectedDate || !selectedTimeSlot) {
       setError('Please select a date and time slot');
@@ -186,25 +192,15 @@ const Booking: React.FC = () => {
 
       console.log('Booking response:', response.data);
 
-      // Extract booking ID from response
+      // Extract booking ID from response and store form data
       const bookingId = response.data.data.id;
+      setCreatedBookingId(bookingId);
+      setFormData(data);
       
-      setProcessingMessage('Initializing secure payment...');
-      setCurrentStep('payment-init');
-
-      // Initialize payment with the booking ID
-      const paymentResponse = await api.post<PaymentInitResponse>(`/payment/initialize/${bookingId}`);
-      console.log('Payment initialization response:', paymentResponse.data);
-
-      // Redirect to Paystack payment URL
-      if (paymentResponse.data.payment_url) {
-        setProcessingMessage('Redirecting to secure payment...');
-        setTimeout(() => {
-          window.location.href = paymentResponse.data.payment_url;
-        }, 1500);
-      } else {
-        throw new Error('No payment URL received from payment initialization');
-      }
+      setProcessingMessage('Booking created! Please select payment method...');
+      
+      // Move to payment method selection instead of directly to Paystack
+      setCurrentStep('payment-method');
 
     } catch (error: any) {
       console.error('Failed to submit booking:', error);
@@ -222,6 +218,74 @@ const Booking: React.FC = () => {
       } else {
         setError('Failed to submit booking. Please try again.');
         setCurrentStep('details');
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Handle Paystack payment selection
+  const handlePaystackSelected = async () => {
+    if (!createdBookingId) {
+      setError('Booking ID not found. Please try again.');
+      setCurrentStep('details');
+      return;
+    }
+
+    setSubmitting(true);
+    setCurrentStep('payment-init');
+    setProcessingMessage('Initializing secure payment...');
+
+    try {
+      // Initialize payment with the booking ID
+      const paymentResponse = await api.post<PaymentInitResponse>(`/payment/initialize/${createdBookingId}`);
+      console.log('Payment initialization response:', paymentResponse.data);
+
+      // Redirect to Paystack payment URL
+      if (paymentResponse.data.payment_url) {
+        setProcessingMessage('Redirecting to secure payment...');
+        setTimeout(() => {
+          window.location.href = paymentResponse.data.payment_url;
+        }, 1500);
+      } else {
+        throw new Error('No payment URL received from payment initialization');
+      }
+    } catch (error: any) {
+      console.error('Failed to initialize payment:', error);
+      if (error.response?.data?.message) {
+        setError(error.response.data.message);
+      } else {
+        setError('Failed to initialize payment. Please try again.');
+      }
+      setCurrentStep('payment-method');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Handle Bank Transfer submission
+  const handleBankTransferSubmit = async (data: BankTransferSubmitData) => {
+    setSubmitting(true);
+    setError('');
+
+    try {
+      // Call the bank transfer confirmation endpoint
+      const response = await api.post('/payment/bank-transfer', {
+        booking_id: data.booking_id,
+        currency: data.currency,
+        payment_method: 'bank_transfer'
+      });
+
+      console.log('Bank transfer confirmation response:', response.data);
+      
+      // Navigate to success page for bank transfer
+      setCurrentStep('bank-transfer-success');
+    } catch (error: any) {
+      console.error('Failed to confirm bank transfer:', error);
+      if (error.response?.data?.message) {
+        setError(error.response.data.message);
+      } else {
+        setError('Failed to confirm payment. Please try again or contact support.');
       }
     } finally {
       setSubmitting(false);
@@ -294,6 +358,9 @@ const Booking: React.FC = () => {
         setCurrentStep('time');
         setSelectedTimeSlot(null);
         break;
+      case 'payment-method':
+        setCurrentStep('details');
+        break;
     }
   };
 
@@ -341,7 +408,7 @@ const Booking: React.FC = () => {
               Book Your <span className="text-primary">Consultation</span>
             </h1>
             <p className="text-xl text-gray max-w-3xl mx-auto">
-              Ready to transform your communications strategy? Follow our simple 3-step process 
+              Ready to transform your communications strategy? Follow our simple process 
               to schedule and secure your consultation with our expert team.
             </p>
           </motion.div>
@@ -351,34 +418,41 @@ const Booking: React.FC = () => {
       {/* Progress Indicator */}
       <section className="bg-white py-8">
         <div className="max-w-4xl mx-auto px-4">
-          <div className="flex items-center justify-center space-x-8">
+          <div className="flex items-center justify-center space-x-4 md:space-x-8 overflow-x-auto">
             {[
               { step: 'date', label: 'Select Date', icon: Calendar },
               { step: 'time', label: 'Choose Time', icon: Clock },
-              { step: 'details', label: 'Your Details', icon: Send }
-            ].map((item, index) => (
-              <div key={item.step} className="flex items-center">
-                <div className={`flex items-center justify-center w-12 h-12 rounded-full border-2 ${
-                  currentStep === item.step || 
-                  (currentStep === 'time' && item.step === 'date') ||
-                  (currentStep === 'details' && (item.step === 'date' || item.step === 'time')) ||
-                  (currentStep === 'processing' && item.step !== 'processing') ||
-                  (currentStep === 'payment-init' && item.step !== 'payment-init')
-                    ? 'bg-primary border-primary text-white' 
-                    : 'border-gray-300 text-gray-400'
-                }`}>
-                  <item.icon className="w-5 h-5" />
+              { step: 'details', label: 'Your Details', icon: Send },
+              { step: 'payment-method', label: 'Payment', icon: CreditCard }
+            ].map((item, index) => {
+              const isCompleted = 
+                (item.step === 'date' && ['time', 'details', 'payment-method', 'processing', 'payment-init', 'bank-transfer-success'].includes(currentStep)) ||
+                (item.step === 'time' && ['details', 'payment-method', 'processing', 'payment-init', 'bank-transfer-success'].includes(currentStep)) ||
+                (item.step === 'details' && ['payment-method', 'processing', 'payment-init', 'bank-transfer-success'].includes(currentStep)) ||
+                (item.step === 'payment-method' && ['processing', 'payment-init', 'bank-transfer-success'].includes(currentStep));
+              
+              const isCurrent = currentStep === item.step;
+
+              return (
+                <div key={item.step} className="flex items-center">
+                  <div className={`flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-full border-2 transition-all duration-300 ${
+                    isCompleted || isCurrent
+                      ? 'bg-primary border-primary text-white' 
+                      : 'border-gray-300 text-gray-400'
+                  }`}>
+                    <item.icon className="w-4 h-4 md:w-5 md:h-5" />
+                  </div>
+                  <span className={`ml-2 md:ml-3 font-medium text-sm md:text-base whitespace-nowrap ${
+                    isCurrent ? 'text-primary' : isCompleted ? 'text-dark' : 'text-gray-500'
+                  }`}>
+                    {item.label}
+                  </span>
+                  {index < 3 && (
+                    <ArrowRight className="w-4 h-4 md:w-5 md:h-5 text-gray-300 mx-2 md:mx-4" />
+                  )}
                 </div>
-                <span className={`ml-3 font-medium ${
-                  currentStep === item.step ? 'text-primary' : 'text-gray-500'
-                }`}>
-                  {item.label}
-                </span>
-                {index < 2 && (
-                  <ArrowRight className="w-5 h-5 text-gray-300 mx-4" />
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
@@ -733,11 +807,22 @@ const Booking: React.FC = () => {
                   disabled={submitting || uploadingFile}
                   className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                 >
-                  <Send className="w-5 h-5 mr-2" />
-                  {uploadingFile ? 'Uploading File...' : 'Proceed to Payment'}
+                  <ArrowRight className="w-5 h-5 mr-2" />
+                  {uploadingFile ? 'Uploading File...' : 'Continue to Payment'}
                 </button>
               </form>
             </motion.div>
+          )}
+
+          {/* Step 4: Payment Method Selection */}
+          {currentStep === 'payment-method' && (
+            <PaymentMethodSelector
+              bookingId={createdBookingId}
+              onPaystackSelected={handlePaystackSelected}
+              onBankTransferSubmit={handleBankTransferSubmit}
+              onBack={goBack}
+              isSubmitting={submitting}
+            />
           )}
 
           {/* Processing State */}
@@ -762,63 +847,117 @@ const Booking: React.FC = () => {
               </div>
             </motion.div>
           )}
+
+          {/* Bank Transfer Success State */}
+          {currentStep === 'bank-transfer-success' && (
+            <motion.div
+              variants={fadeInUp}
+              initial="initial"
+              animate="animate"
+              className="bg-white rounded-2xl shadow-xl p-8 md:p-12 text-center"
+            >
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <CheckCircle className="w-10 h-10 text-green-500" />
+              </div>
+              <h2 className="text-2xl md:text-3xl font-bold text-dark mb-4">
+                Payment Notification Sent! 🎉
+              </h2>
+              <p className="text-gray mb-6 max-w-lg mx-auto">
+                Thank you! Your booking has been recorded and we've been notified of your bank transfer. 
+                Our team will verify your payment and send you a confirmation email shortly.
+              </p>
+              
+              <div className="bg-primary/10 rounded-xl p-6 mb-8 text-left max-w-lg mx-auto">
+                <h3 className="font-semibold text-dark mb-3">What's Next?</h3>
+                <ul className="space-y-2 text-gray">
+                  <li className="flex items-start">
+                    <div className="w-2 h-2 bg-primary rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                    Our team will verify your bank transfer within 24 hours
+                  </li>
+                  <li className="flex items-start">
+                    <div className="w-2 h-2 bg-primary rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                    You'll receive a confirmation email once verified
+                  </li>
+                  <li className="flex items-start">
+                    <div className="w-2 h-2 bg-primary rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                    Meeting details will be sent before your consultation
+                  </li>
+                </ul>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="/" className="btn-primary">
+                  Back to Home
+                </a>
+                <a href="/contact" className="btn-secondary">
+                  Contact Us
+                </a>
+              </div>
+
+              <p className="text-sm text-gray mt-6">
+                Booking Reference: <span className="font-mono font-medium">{createdBookingId}</span>
+              </p>
+            </motion.div>
+          )}
         </div>
       </section>
 
-      {/* What to Expect */}
-      <section className="section-padding bg-gray-50">
-        <div className="max-w-7xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-12"
-          >
-            <h2 className="text-3xl md:text-4xl font-bold text-dark mb-4">
-              What Happens Next?
-            </h2>
-            <p className="text-xl text-gray max-w-3xl mx-auto">
-              Here's what you can expect after completing your booking and payment
-            </p>
-          </motion.div>
+      {/* What to Expect - Hide on payment method, processing, and success steps */}
+      {!['payment-method', 'processing', 'payment-init', 'bank-transfer-success'].includes(currentStep) && (
+        <section className="section-padding bg-gray-50">
+          <div className="max-w-7xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="text-center mb-12"
+            >
+              <h2 className="text-3xl md:text-4xl font-bold text-dark mb-4">
+                What Happens Next?
+              </h2>
+              <p className="text-xl text-gray max-w-3xl mx-auto">
+                Here's what you can expect after completing your booking and payment
+              </p>
+            </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                step: '01',
-                title: 'Secure Payment',
-                description: 'Complete your payment securely through Paystack to confirm your consultation slot.'
-              },
-              {
-                step: '02',
-                title: 'Instant Confirmation',
-                description: 'Receive immediate email confirmation with your booking details and next steps.'
-              },
-              {
-                step: '03',
-                title: 'Meeting Link',
-                description: 'Our team will send you the meeting link and any preparation materials before your consultation.'
-              }
-            ].map((item, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                className="text-center"
-              >
-                <div className="w-16 h-16 bg-primary text-white rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold">
-                  {item.step}
-                </div>
-                <h3 className="text-xl font-semibold text-dark mb-3">{item.title}</h3>
-                <p className="text-gray">{item.description}</p>
-              </motion.div>
-            ))}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {[
+                {
+                  step: '01',
+                  title: 'Secure Payment',
+                  description: 'Complete your payment via Paystack or bank transfer to confirm your consultation slot.'
+                },
+                {
+                  step: '02',
+                  title: 'Instant Confirmation',
+                  description: 'Receive immediate email confirmation with your booking details and next steps.'
+                },
+                {
+                  step: '03',
+                  title: 'Meeting Link',
+                  description: 'Our team will send you the meeting link and any preparation materials before your consultation.'
+                }
+              ].map((item, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                  className="text-center"
+                >
+                  <div className="w-16 h-16 bg-primary text-white rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold">
+                    {item.step}
+                  </div>
+                  <h3 className="text-xl font-semibold text-dark mb-3">{item.title}</h3>
+                  <p className="text-gray">{item.description}</p>
+                </motion.div>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
     </div>
   );
 };
