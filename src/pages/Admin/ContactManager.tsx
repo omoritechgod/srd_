@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { format } from "date-fns";
 import {
   ArrowLeft,
   Download,
@@ -37,7 +36,7 @@ const ContactManager: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this message?")) return;
+    if (!window.confirm("Are you sure you want to delete this message?")) return;
 
     try {
       await deleteContactMessage(id);
@@ -45,6 +44,25 @@ const ContactManager: React.FC = () => {
     } catch (error) {
       console.error("Failed to delete message:", error);
       alert("Failed to delete message. Please try again.");
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return "Unknown date";
+      }
+      return date.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      });
+    } catch {
+      return "Unknown date";
     }
   };
 
@@ -68,20 +86,10 @@ const ContactManager: React.FC = () => {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `contact-messages-${format(new Date(), "yyyy-MM-dd")}.csv`;
+    const today = new Date().toISOString().split("T")[0];
+    a.download = `contact-messages-${today}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
-  };
-
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      return isNaN(date.getTime())
-        ? "Unknown date"
-        : format(date, "MMM dd, yyyy h:mm a");
-    } catch {
-      return "Unknown date";
-    }
   };
 
   useEffect(() => {
@@ -186,7 +194,7 @@ const ContactManager: React.FC = () => {
                     <div className="flex flex-wrap gap-4 mb-3 text-sm text-gray">
                       <div className="flex items-center">
                         <Mail className="w-4 h-4 mr-2" />
-                        
+                        <a
                           href={`mailto:${contact.email}`}
                           className="hover:text-primary"
                         >
@@ -196,7 +204,7 @@ const ContactManager: React.FC = () => {
                       {contact.phone && (
                         <div className="flex items-center">
                           <Phone className="w-4 h-4 mr-2" />
-                          
+                          <a
                             href={`tel:${contact.phone}`}
                             className="hover:text-primary"
                           >
@@ -271,7 +279,7 @@ const ContactManager: React.FC = () => {
                   <label className="block text-sm font-medium text-gray mb-1">
                     Email
                   </label>
-                  
+                  <a
                     href={`mailto:${selectedMessage.email}`}
                     className="text-primary hover:underline"
                   >
@@ -315,7 +323,7 @@ const ContactManager: React.FC = () => {
             </div>
 
             <div className="p-6 border-t flex justify-end space-x-3">
-              
+              <a
                 href={`mailto:${selectedMessage.email}?subject=Re: ${selectedMessage.subject}`}
                 className="btn-primary inline-flex items-center"
               >

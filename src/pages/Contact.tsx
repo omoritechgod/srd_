@@ -66,12 +66,6 @@ const Contact: React.FC = () => {
     },
   ];
 
-  const socialLinks = [
-    { icon: Instagram, href: "https://instagram.com", label: "Instagram" },
-    { icon: MessageCircle, href: "https://wa.me/2348165045779", label: "WhatsApp" },
-    { icon: Linkedin, href: "https://linkedin.com", label: "LinkedIn" },
-  ];
-
   return (
     <div className="overflow-hidden">
       {/* Hero Section */}
@@ -103,20 +97,23 @@ const Contact: React.FC = () => {
             transition={{ duration: 0.6 }}
             className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16"
           >
-            {contactInfo.map((info, index) => (
-              <div key={index} className="card p-6 text-center">
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <info.icon className="w-8 h-8 text-primary" />
+            {contactInfo.map((info, index) => {
+              const IconComponent = info.icon;
+              return (
+                <div key={index} className="card p-6 text-center">
+                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <IconComponent className="w-8 h-8 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-dark mb-2">
+                    {info.title}
+                  </h3>
+                  <p className="text-lg text-primary font-medium mb-1">
+                    {info.details}
+                  </p>
+                  <p className="text-gray text-sm">{info.description}</p>
                 </div>
-                <h3 className="text-xl font-semibold text-dark mb-2">
-                  {info.title}
-                </h3>
-                <p className="text-lg text-primary font-medium mb-1">
-                  {info.details}
-                </p>
-                <p className="text-gray text-sm">{info.description}</p>
-              </div>
-            ))}
+              );
+            })}
           </motion.div>
 
           {/* Contact Form and Map */}
@@ -295,21 +292,33 @@ const Contact: React.FC = () => {
                   Follow Us
                 </h3>
                 <div className="flex space-x-4">
-                  {socialLinks.map((social, index) => {
-                    const IconComponent = social.icon;
-                    return (
-                      
-                        key={index}
-                        href={social.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center hover:bg-primary hover:text-white transition-all duration-300 group"
-                        aria-label={social.label}
-                      >
-                        <IconComponent className="w-6 h-6 text-primary group-hover:text-white" />
-                      </a>
-                    );
-                  })}
+                  <a
+                    href="https://instagram.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center hover:bg-primary hover:text-white transition-all duration-300 group"
+                    aria-label="Instagram"
+                  >
+                    <Instagram className="w-6 h-6 text-primary group-hover:text-white" />
+                  </a>
+                  <a
+                    href="https://wa.me/2348165045779"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center hover:bg-primary hover:text-white transition-all duration-300 group"
+                    aria-label="WhatsApp"
+                  >
+                    <MessageCircle className="w-6 h-6 text-primary group-hover:text-white" />
+                  </a>
+                  <a
+                    href="https://linkedin.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center hover:bg-primary hover:text-white transition-all duration-300 group"
+                    aria-label="LinkedIn"
+                  >
+                    <Linkedin className="w-6 h-6 text-primary group-hover:text-white" />
+                  </a>
                 </div>
                 <p className="text-gray mt-4">
                   Stay connected with us on social media for the latest updates,

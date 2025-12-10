@@ -34,7 +34,6 @@ const AboutManager: React.FC = () => {
         setValue("content", data.content || "");
         setCurrentImage(data.image || "");
       } else {
-        // Set default content
         setValue(
           "content",
           `SRD Consulting Ltd is a premier communications and public relations firm dedicated to helping organizations navigate the complex landscape of modern communication.
@@ -56,7 +55,6 @@ Our team of seasoned professionals brings together decades of experience in medi
     try {
       let imageUrl = currentImage;
 
-      // Upload image to Cloudinary if a new file is selected
       if (data.image && data.image.length > 0) {
         const file = data.image[0];
         const formData = new FormData();
@@ -80,7 +78,6 @@ Our team of seasoned professionals brings together decades of experience in medi
         }
       }
 
-      // Update about content via service
       await updateAboutContent({
         content: data.content,
         image: imageUrl,
@@ -110,7 +107,10 @@ Our team of seasoned professionals brings together decades of experience in medi
 
   const removePreviewImage = () => {
     setPreviewImage("");
-    setValue("image", undefined);
+    const input = document.getElementById("image-upload") as HTMLInputElement;
+    if (input) {
+      input.value = "";
+    }
   };
 
   if (loading) {
@@ -223,13 +223,12 @@ Our team of seasoned professionals brings together decades of experience in medi
                     : "Upload banner image"}
                 </p>
                 <input
-                  {...register("image", {
-                    onChange: handleImageChange,
-                  })}
+                  {...register("image")}
                   type="file"
                   accept="image/*"
                   className="hidden"
                   id="image-upload"
+                  onChange={handleImageChange}
                 />
                 <label
                   htmlFor="image-upload"
@@ -279,7 +278,7 @@ Our team of seasoned professionals brings together decades of experience in medi
               This is how your content will appear on the About page:
             </p>
             <div className="bg-white rounded-lg p-6">
-              
+              <a
                 href="/about"
                 target="_blank"
                 rel="noopener noreferrer"
