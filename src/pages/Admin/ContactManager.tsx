@@ -1,71 +1,104 @@
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import { format } from "date-fns";
 import {
   ArrowLeft,
   Download,
   Eye,
   MessageCircleWarning,
   RefreshCcw,
+  Trash2,
+  Mail,
+  Phone,
+  X,
 } from "lucide-react";
-import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import api from "../../services/api";
+import {
+  getContactMessages,
+  deleteContactMessage,
+  ContactMessage,
+} from "../../services/contactService";
 
-interface ContactForm {
-  name: string;
-  email: string;
-  phone: number | string;
-  subject: string;
-  message: string;
-  time_stamp: string;
-}
+const ContactManager: React.FC = () => {
+  const [contacts, setContacts] = useState<ContactMessage[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(null);
 
-const ContactManager = () => {
-  const [contacts, setContacts] = useState<ContactForm[]>([]);
-  const [searchTerm, setSearchTerm] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
-
-  //load data
   const fetchContacts = async () => {
     setLoading(true);
     try {
-      const response = await api.get(
-        "https://api.sheetbest.com/sheets/4a39b25e-98e9-4d0d-b940-161743cc9b89"
-      );
-      const data = response.data;
+      const data = await getContactMessages();
       setContacts(data);
     } catch (error) {
-      console.error("failed to fetch contact list", error);
+      console.error("Failed to fetch contact messages:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  //sorted contacts
-  const sortContacts = (sortOption: string) => {
-    if (sortOption === "") {
-      return contacts;
-    } else if (sortOption === "A-Z") {
-      return [...contacts].sort((a, b) => a.name.localeCompare(b.name));
-    } else if (sortOption === "Z-A") {
-      return [...contacts].sort((a, b) => b.name.localeCompare(a.name));
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this message?")) return;
+
+    try {
+      await deleteContactMessage(id);
+      await fetchContacts();
+    } catch (error) {
+      console.error("Failed to delete message:", error);
+      alert("Failed to delete message. Please try again.");
     }
   };
 
-  //export csv
-  
+  const exportToCSV = () => {
+    const headers = ["Name", "Email", "Phone", "Subject", "Message", "Date"];
+    const csvContent = [
+      headers.join(","),
+      ...contacts.map((contact) =>
+        [
+          `"${contact.name}"`,
+          `"${contact.email}"`,
+          `"${contact.phone || ""}"`,
+          `"${contact.subject}"`,
+          `"${contact.message.replace(/"/g, '""')}"`,
+          `"${formatDate(contact.created_at)}"`,
+        ].join(",")
+      ),
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `contact-messages-${format(new Date(), "yyyy-MM-dd")}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return isNaN(date.getTime())
+        ? "Unknown date"
+        : format(date, "MMM dd, yyyy h:mm a");
+    } catch {
+      return "Unknown date";
+    }
+  };
 
   useEffect(() => {
     fetchContacts();
   }, []);
 
-  const sortContact = sortContacts(searchTerm);
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
-    <div>
-      {loading ? (
-        <div className="px-5 text-center py-2 fixed top-10 w-36 mx-auto rounded-md left-[25%] right-[25%] transform translate-x-1/2  bg-red-300 text-white">
-          <p>Loading...</p>
-        </div>
-      ) : null}
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
@@ -80,113 +113,227 @@ const ContactManager = () => {
               <h1 className="text-2xl font-bold text-dark">Contact Manager</h1>
               <p className="text-gray">Manage client contacts and inquiries</p>
             </div>
-            <div className="flex items-center gap-2 max-sm:flex-col max-sm:items-start">
+            <div className="flex items-center gap-2">
               <button
-                className="flex items-center btn-secondary text-red-300 border-red-300 hover:bg-red-300"
+                className="btn-secondary inline-flex items-center"
                 type="button"
                 onClick={fetchContacts}
               >
                 <RefreshCcw className="w-4 h-4 mr-2" />
                 Refresh
               </button>
-              <button className="flex items-center btn-secondary text-red-300 border-red-300 hover:bg-red-300">
+              <button
+                className="btn-primary inline-flex items-center"
+                onClick={exportToCSV}
+                disabled={contacts.length === 0}
+              >
                 <Download className="w-4 h-4 mr-2" />
-                Export
+                Export CSV
               </button>
             </div>
           </div>
         </div>
       </header>
-      <main className="max-w-7xl w-[90%] bg-red-300 mx-auto mt-10 py-8 text-white rounded-md">
-        <div className="py-4 text-center border-b border-white">
-          <h2 className="text-3xl font-bold">Total Contact Received</h2>
-          <p className="text-2xl mt-2 font-bold">{contacts.length}</p>
-        </div>
-        <div>
-          <div className="flex justify-between items-center m-4">
-            <select
-              name="filter"
-              id="filter"
-              className="input-field bg-none max-w-[250px] w-[95%] text-black"
-              onChange={(e) => setSearchTerm(e.target.value)}
-            >
-              <option value="">sort by</option>
-              <option value="A-Z">A-Z</option>
-              <option value="Z-A">Z-A</option>
-              {/* <option value="status">Status</option> */}
-            </select>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full bg-white text-black relative min-h-[300px]">
-              <thead>
-                <tr>
-                  <th className="py-2 px-4 border-b">Name</th>
-                  <th className="py-2 px-4 border-b">Email</th>
-                  <th className="py-2 px-4 border-b">Phone</th>
-                  <th className="py-2 px-4 border-b">Subject</th>
-                  <th className="py-2 px-4 border-b">Message</th>
-                  <th className="py-2 px-4 border-b">Date</th>
-                </tr>
-              </thead>
 
-              {contacts.length === 0 ? (
-                <div className="flex flex-col gap-4 items-center justify-center w-64 h-64 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                  <MessageCircleWarning className="w-10 h-10 text-red-600" />
-                  <p>No contacts available</p>
-                  {/* <button className="btn-primary flex items-center"><RefreshCcw className="w-4 h-4 mr-2" /></button> */}
-                </div>
-              ) : (
-                <tbody>
-                  {sortContact
-                    ? sortContact.map((contact, index) => (
-                        <tr
-                          key={index + " " + contact.name}
-                          className="bg-gray-100 hover:bg-gray-200 text-center border-b border-white"
-                        >
-                          <td className="py-2 px-4 text-sm">{contact.name}</td>
-                          <td className="py-2 px-4 text-sm">{contact.email}</td>
-                          <td className="py-2 px-4 text-sm">{contact.phone}</td>
-                          <td className="py-2 px-4 text-sm">
-                            {contact.subject}
-                          </td>
-                          <td className="py-2 px-4 text-sm max-w-[250px]">
-                            {contact.message}
-                          </td>
-                          <td className="py-2 px-4 text-sm">
-                            {contact.time_stamp}
-                          </td>
-                        </tr>
-                      ))
-                    : contacts.map((contact, index) => (
-                        <tr
-                          key={index + " " + contact.name}
-                          className="bg-gray-100 hover:bg-gray-200 text-center border-b border-white"
-                        >
-                          <td className="py-2 px-4 text-sm">{contact.name}</td>
-                          <td className="py-2 px-4 text-sm">{contact.email}</td>
-                          <td className="py-2 px-4 text-sm">{contact.phone}</td>
-                          <td className="py-2 px-4 text-sm">
-                            {contact.subject}
-                          </td>
-                          <td className="py-2 px-4 text-sm max-w-[250px]">
-                            {contact.message}
-                          </td>
-                          <td className="py-2 px-4 text-sm">
-                            {contact.time_stamp}
-                          </td>
-                        </tr>
-                      ))}
-                </tbody>
-              )}
-            </table>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Stats */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-xl p-6 shadow-sm mb-8"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray">Total Messages</p>
+              <p className="text-3xl font-bold text-dark">{contacts.length}</p>
+            </div>
+            <Mail className="w-12 h-12 text-primary" />
           </div>
+        </motion.div>
+
+        {/* Messages List */}
+        <div className="space-y-4">
+          {contacts.length === 0 ? (
+            <div className="text-center py-12 bg-white rounded-xl shadow-sm">
+              <MessageCircleWarning className="w-16 h-16 text-gray mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-dark mb-2">
+                No messages yet
+              </h3>
+              <p className="text-gray">
+                Contact form submissions will appear here
+              </p>
+            </div>
+          ) : (
+            contacts.map((contact, index) => (
+              <motion.div
+                key={contact.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className="bg-white rounded-xl shadow-sm p-6"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center mb-2">
+                      <h3 className="text-lg font-semibold text-dark mr-3">
+                        {contact.name}
+                      </h3>
+                      <span className="px-3 py-1 bg-primary/10 text-primary text-sm rounded-full">
+                        {contact.subject}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap gap-4 mb-3 text-sm text-gray">
+                      <div className="flex items-center">
+                        <Mail className="w-4 h-4 mr-2" />
+                        
+                          href={`mailto:${contact.email}`}
+                          className="hover:text-primary"
+                        >
+                          {contact.email}
+                        </a>
+                      </div>
+                      {contact.phone && (
+                        <div className="flex items-center">
+                          <Phone className="w-4 h-4 mr-2" />
+                          
+                            href={`tel:${contact.phone}`}
+                            className="hover:text-primary"
+                          >
+                            {contact.phone}
+                          </a>
+                        </div>
+                      )}
+                    </div>
+
+                    <p className="text-gray mb-3 line-clamp-2">
+                      {contact.message}
+                    </p>
+
+                    <p className="text-xs text-gray">
+                      Received: {formatDate(contact.created_at)}
+                    </p>
+                  </div>
+
+                  <div className="flex space-x-2 ml-4">
+                    <button
+                      onClick={() => setSelectedMessage(contact)}
+                      className="btn-secondary text-sm inline-flex items-center"
+                    >
+                      <Eye className="w-4 h-4 mr-1" />
+                      View
+                    </button>
+                    <button
+                      onClick={() => handleDelete(contact.id)}
+                      className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm inline-flex items-center transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4 mr-1" />
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            ))
+          )}
         </div>
       </main>
+
+      {/* Message Detail Modal */}
+      {selectedMessage && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+          >
+            <div className="p-6 border-b">
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-bold text-dark">Message Details</h2>
+                <button
+                  onClick={() => setSelectedMessage(null)}
+                  className="text-gray hover:text-dark"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray mb-1">
+                  From
+                </label>
+                <p className="text-dark font-semibold">{selectedMessage.name}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray mb-1">
+                    Email
+                  </label>
+                  
+                    href={`mailto:${selectedMessage.email}`}
+                    className="text-primary hover:underline"
+                  >
+                    {selectedMessage.email}
+                  </a>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray mb-1">
+                    Phone
+                  </label>
+                  <p className="text-dark">
+                    {selectedMessage.phone || "Not provided"}
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray mb-1">
+                  Subject
+                </label>
+                <p className="text-dark">{selectedMessage.subject}</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray mb-1">
+                  Message
+                </label>
+                <p className="text-dark whitespace-pre-wrap bg-gray-50 p-4 rounded-lg">
+                  {selectedMessage.message}
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray mb-1">
+                  Received
+                </label>
+                <p className="text-dark">
+                  {formatDate(selectedMessage.created_at)}
+                </p>
+              </div>
+            </div>
+
+            <div className="p-6 border-t flex justify-end space-x-3">
+              
+                href={`mailto:${selectedMessage.email}?subject=Re: ${selectedMessage.subject}`}
+                className="btn-primary inline-flex items-center"
+              >
+                <Mail className="w-4 h-4 mr-2" />
+                Reply via Email
+              </a>
+              <button
+                onClick={() => setSelectedMessage(null)}
+                className="btn-secondary"
+              >
+                Close
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 };
 
 export default ContactManager;
-function fetchContacts() {
-  throw new Error("Function not implemented.");
-}

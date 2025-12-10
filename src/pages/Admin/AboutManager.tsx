@@ -3,17 +3,11 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { Save, Upload, X, ArrowLeft } from "lucide-react";
-import api from "../../services/api";
-
-interface AboutContent {
-  content: string;
-  image?: string;
-}
+import { getAboutContent, updateAboutContent, AboutContent } from "../../services/aboutService";
 
 interface AboutForm {
-  id: number | string;
   content: string;
-  image?: string | FileList;
+  image?: FileList;
 }
 
 const AboutManager: React.FC = () => {
@@ -35,23 +29,23 @@ const AboutManager: React.FC = () => {
 
   const fetchAboutContent = async () => {
     try {
-      const response = await api.get("https://api.sheetbest.com/sheets/6743decf-22be-4c3b-9b1f-00a733e5da50");
-      const data = response.data;
-      setValue("content", data.content[0]);
-      setCurrentImage(data.image[0] || "");
-    } catch (error) {
-      console.error("Failed to fetch about content:", error);
-      // Set default content
-      setValue(
-        "content",
-        `SRD Consulting Ltd is a premier communications and public relations firm dedicated to helping organizations navigate the complex landscape of modern communication.
+      const data = await getAboutContent();
+      if (data) {
+        setValue("content", data.content || "");
+        setCurrentImage(data.image || "");
+      } else {
+        // Set default content
+        setValue(
+          "content",
+          `SRD Consulting Ltd is a premier communications and public relations firm dedicated to helping organizations navigate the complex landscape of modern communication.
 
 Founded on the principles of strategic thinking, creative execution, and measurable results, we provide tailored solutions that drive meaningful engagement and business growth.
 
-Our team of seasoned professionals brings together decades of experience in media relations, crisis communication, brand storytelling, and strategic consultancy. We understand that every organization has a unique story to tell, and we're here to help you tell it effectively.
-
-Whether you're looking to build brand awareness, manage a crisis, or develop a comprehensive communication strategy, SRD Consulting is your trusted partner in achieving communication excellence.`
-      );
+Our team of seasoned professionals brings together decades of experience in media relations, crisis communication, brand storytelling, and strategic consultancy.`
+        );
+      }
+    } catch (error) {
+      console.error("Failed to fetch about content:", error);
     } finally {
       setLoading(false);
     }
@@ -60,13 +54,15 @@ Whether you're looking to build brand awareness, manage a crisis, or develop a c
   const onSubmit = async (data: AboutForm) => {
     setSubmitting(true);
     try {
-      let imageUrl = "";
+      let imageUrl = currentImage;
 
-      if (data.image && data.image[0]) {
+      // Upload image to Cloudinary if a new file is selected
+      if (data.image && data.image.length > 0) {
+        const file = data.image[0];
         const formData = new FormData();
-        formData.append("file", data.image[0]);
+        formData.append("file", file);
         formData.append("upload_preset", "testimonials");
-        formData.append("folder", "srdtestimonails");
+        formData.append("folder", "srdabout");
 
         const response = await fetch(
           "https://api.cloudinary.com/v1_1/dbvcdwf10/image/upload",
@@ -79,25 +75,20 @@ Whether you're looking to build brand awareness, manage a crisis, or develop a c
 
         if (response.ok) {
           imageUrl = photoData.secure_url;
-        }else{
+        } else {
           console.error("Image upload failed:", response.statusText);
         }
       }
 
-      const payload: AboutForm = {
-        id: 1,
+      // Update about content via service
+      await updateAboutContent({
         content: data.content,
-        image: imageUrl || currentImage,
-      }
-      console.log(payload,data.image && data.image[0])
+        image: imageUrl,
+      });
 
-      const req = await api.patch(`https://api.sheetbest.com/sheets/6743decf-22be-4c3b-9b1f-00a733e5da50/id/1`,payload);
-
-      if (req.status === 200) {
-        alert("About content updated successfully!");
-        await fetchAboutContent();
-        setPreviewImage("");
-      }
+      alert("About content updated successfully!");
+      await fetchAboutContent();
+      setPreviewImage("");
     } catch (error) {
       console.error("Failed to update about content:", error);
       alert("Failed to update content. Please try again.");
@@ -233,7 +224,7 @@ Whether you're looking to build brand awareness, manage a crisis, or develop a c
                 </p>
                 <input
                   {...register("image", {
-                    onChange: handleImageChange
+                    onChange: handleImageChange,
                   })}
                   type="file"
                   accept="image/*"
@@ -288,7 +279,7 @@ Whether you're looking to build brand awareness, manage a crisis, or develop a c
               This is how your content will appear on the About page:
             </p>
             <div className="bg-white rounded-lg p-6">
-              <a
+              
                 href="/about"
                 target="_blank"
                 rel="noopener noreferrer"

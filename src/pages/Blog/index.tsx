@@ -3,17 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Calendar, User, ArrowRight, Search } from 'lucide-react';
 import { format } from 'date-fns';
-import api from '../../services/api';
-
-interface BlogPost {
-  id: string;
-  title: string;
-  slug: string;
-  content: string;
-  image?: string;
-  tags: string[];
-  createdAt: string;
-}
+import { getPublicPosts, BlogPost } from '../../services/blogService';
 
 const Blog: React.FC = () => {
   const [posts, setPosts] = useState<BlogPost[]>([]);
@@ -23,11 +13,10 @@ const Blog: React.FC = () => {
 
   useEffect(() => {
     const fetchPosts = async () => {
-      try {
-        const response = await api.get('/blog');
-        setPosts(response.data);
-      } catch (error) {
-        console.error('Failed to fetch blog posts:', error);
+      const data = await getPublicPosts();
+      if (data.length > 0) {
+        setPosts(data);
+      } else {
         // Fallback demo posts
         setPosts([
           {
@@ -37,7 +26,7 @@ const Blog: React.FC = () => {
             content: 'In an increasingly digital world, strategic communications must evolve...',
             image: 'https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&w=800',
             tags: ['Strategy', 'Digital', 'Future'],
-            createdAt: new Date().toISOString()
+            created_at: new Date().toISOString()
           },
           {
             id: '2',
@@ -45,49 +34,39 @@ const Blog: React.FC = () => {
             slug: 'crisis-communication-best-practices',
             content: 'When crisis strikes, having a well-prepared communication strategy...',
             image: 'https://images.pexels.com/photos/3184360/pexels-photo-3184360.jpeg?auto=compress&cs=tinysrgb&w=800',
-            tags: ['Crisis', 'Management', 'Best Practices'],
-            createdAt: new Date(Date.now() - 86400000).toISOString()
+            tags: ['Crisis', 'Management'],
+            created_at: new Date(Date.now() - 86400000).toISOString()
           },
-          {
-            id: '3',
-            title: 'Building Authentic Brand Stories',
-            slug: 'building-authentic-brand-stories',
-            content: 'Authentic storytelling is the cornerstone of effective brand communication...',
-            image: 'https://images.pexels.com/photos/3184418/pexels-photo-3184418.jpeg?auto=compress&cs=tinysrgb&w=800',
-            tags: ['Branding', 'Storytelling', 'Authenticity'],
-            createdAt: new Date(Date.now() - 172800000).toISOString()
-          }
         ]);
-      } finally {
-        setLoading(false);
       }
+      setLoading(false);
     };
 
     fetchPosts();
   }, []);
 
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return isNaN(date.getTime()) ? 'Unknown date' : format(date, 'MMM dd, yyyy');
+    } catch {
+      return 'Unknown date';
+    }
+  };
+
+  const getPostTags = (post: BlogPost): string[] => {
+    return Array.isArray(post.tags) ? post.tags : [];
+  };
+
   const filteredPosts = posts.filter(post => {
     const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          post.content.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesTag = !selectedTag || post.tags.includes(selectedTag);
+    const postTags = getPostTags(post);
+    const matchesTag = !selectedTag || postTags.includes(selectedTag);
     return matchesSearch && matchesTag;
   });
 
-  const allTags = Array.from(new Set(posts.flatMap(post => post.tags)));
-
-  const fadeInUp = {
-    initial: { opacity: 0, y: 60 },
-    animate: { opacity: 1, y: 0 },
-    transition: { duration: 0.6 }
-  };
-
-  const staggerContainer = {
-    animate: {
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
-  };
+  const allTags = Array.from(new Set(posts.flatMap(post => getPostTags(post))));
 
   if (loading) {
     return (
@@ -111,8 +90,7 @@ const Blog: React.FC = () => {
               Insights & <span className="text-primary">Thought Leadership</span>
             </h1>
             <p className="text-xl text-gray max-w-3xl mx-auto">
-              Stay informed with the latest trends, strategies, and insights 
-              in communications and public relations.
+              Stay informed with the latest trends, strategies, and insights in communications and public relations.
             </p>
           </motion.div>
         </div>
@@ -152,16 +130,13 @@ const Blog: React.FC = () => {
           </motion.div>
 
           {/* Blog Posts Grid */}
-          <motion.div
-            variants={staggerContainer}
-            initial="initial"
-            animate="animate"
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-          >
-            {filteredPosts.map((post) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {filteredPosts.map((post, index) => (
               <motion.article
                 key={post.id}
-                variants={fadeInUp}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
                 className="card overflow-hidden group"
               >
                 <div className="relative overflow-hidden">
@@ -170,31 +145,27 @@ const Blog: React.FC = () => {
                     alt={post.title}
                     className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </div>
                 
                 <div className="p-6">
                   <div className="flex items-center text-sm text-gray mb-3">
                     <Calendar className="w-4 h-4 mr-2" />
-                    {format(new Date(post.createdAt), 'MMM dd, yyyy')}
+                    {formatDate(post.created_at)}
                     <User className="w-4 h-4 ml-4 mr-2" />
                     SRD Team
                   </div>
                   
-                  <h2 className="text-xl font-semibold text-dark mb-3 group-hover:text-primary transition-colors duration-300">
+                  <h2 className="text-xl font-semibold text-dark mb-3 group-hover:text-primary transition-colors">
                     {post.title}
                   </h2>
                   
                   <p className="text-gray mb-4 line-clamp-3">
-                    {post.content.substring(0, 150)}...
+                    {post.content.replace(/<[^>]*>/g, '').substring(0, 150)}...
                   </p>
                   
                   <div className="flex flex-wrap gap-2 mb-4">
-                    {post.tags.map(tag => (
-                      <span 
-                        key={tag}
-                        className="px-3 py-1 bg-primary/10 text-primary text-sm rounded-full"
-                      >
+                    {getPostTags(post).map(tag => (
+                      <span key={tag} className="px-3 py-1 bg-primary/10 text-primary text-sm rounded-full">
                         {tag}
                       </span>
                     ))}
@@ -202,7 +173,7 @@ const Blog: React.FC = () => {
                   
                   <Link 
                     to={`/blog/${post.slug}`}
-                    className="inline-flex items-center text-primary font-medium group-hover:translate-x-2 transition-transform duration-300"
+                    className="inline-flex items-center text-primary font-medium group-hover:translate-x-2 transition-transform"
                   >
                     Read More
                     <ArrowRight className="ml-2 w-4 h-4" />
@@ -210,16 +181,12 @@ const Blog: React.FC = () => {
                 </div>
               </motion.article>
             ))}
-          </motion.div>
+          </div>
 
           {filteredPosts.length === 0 && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-center py-12"
-            >
+            <div className="text-center py-12">
               <p className="text-xl text-gray">No articles found matching your criteria.</p>
-            </motion.div>
+            </div>
           )}
         </div>
       </section>

@@ -10,17 +10,8 @@ import {
   MessageCircle,
   Linkedin,
 } from "lucide-react";
-import api from "../services/api";
+import { submitContactForm, ContactSubmission } from "../services/contactService";
 
-interface ContactForm {
-  name: string;
-  email: string;
-  phone: string;
-  subject: string;
-  message: string;
-  time_stamp: string;
-}
-const currentDate = new Date();
 const Contact: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -30,31 +21,16 @@ const Contact: React.FC = () => {
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<ContactForm>({
-    defaultValues: {
-      name: "",
-      email: "",
-      phone: "",
-      subject: "",
-      message: "",
-      time_stamp: `${currentDate.getDate()}-${
-        currentDate.getMonth() + 1
-      }-${currentDate.getFullYear()} ${currentDate.getHours()}:${currentDate.getMinutes()}`,
-    },
-  });
+  } = useForm<ContactSubmission>();
 
-  const onSubmit = async (data: ContactForm) => {
+  const onSubmit = async (data: ContactSubmission) => {
     setSubmitting(true);
     try {
-      const response = await api.post(
-        "https://api.sheetbest.com/sheets/2095acbb-5929-42b1-8335-7fec8ae12816",
-        data
-      );
-      if (response.status !== 200) {
-        alert("Failed to submit contact form");
+      const success = await submitContactForm(data);
+      if (success) {
+        setSubmitted(true);
+        reset();
       }
-      setSubmitted(true);
-      reset();
     } catch (error) {
       console.error("Failed to submit contact form:", error);
       alert("Failed to send message. Please try again.");
@@ -91,9 +67,9 @@ const Contact: React.FC = () => {
   ];
 
   const socialLinks = [
-    { icon: Instagram, href: "#", label: "Instagram" },
-    { icon: MessageCircle, href: "#", label: "WhatsApp" },
-    { icon: Linkedin, href: "#", label: "LinkedIn" },
+    { icon: Instagram, href: "https://instagram.com", label: "Instagram" },
+    { icon: MessageCircle, href: "https://wa.me/2348165045779", label: "WhatsApp" },
+    { icon: Linkedin, href: "https://linkedin.com", label: "LinkedIn" },
   ];
 
   return (
@@ -227,18 +203,11 @@ const Contact: React.FC = () => {
                           Phone
                         </label>
                         <input
-                          {...register("phone", {
-                            required: "Phone number is required",
-                          })}
+                          {...register("phone")}
                           type="tel"
                           className="input-field"
                           placeholder="+234 816 504 5779"
                         />
-                        {errors.phone && (
-                          <p className="text-red-500 text-sm mt-1">
-                            {errors.phone.message}
-                          </p>
-                        )}
                       </div>
 
                       <div>
@@ -326,16 +295,21 @@ const Contact: React.FC = () => {
                   Follow Us
                 </h3>
                 <div className="flex space-x-4">
-                  {socialLinks.map((social, index) => (
-                    <a
-                      key={index}
-                      href={social.href}
-                      className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center hover:bg-primary hover:text-white transition-all duration-300 group"
-                      aria-label={social.label}
-                    >
-                      <social.icon className="w-6 h-6 text-primary group-hover:text-white" />
-                    </a>
-                  ))}
+                  {socialLinks.map((social, index) => {
+                    const IconComponent = social.icon;
+                    return (
+                      
+                        key={index}
+                        href={social.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center hover:bg-primary hover:text-white transition-all duration-300 group"
+                        aria-label={social.label}
+                      >
+                        <IconComponent className="w-6 h-6 text-primary group-hover:text-white" />
+                      </a>
+                    );
+                  })}
                 </div>
                 <p className="text-gray mt-4">
                   Stay connected with us on social media for the latest updates,
