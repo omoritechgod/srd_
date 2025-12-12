@@ -3,47 +3,85 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Calendar, User, ArrowRight, Search } from 'lucide-react';
 import { format } from 'date-fns';
-import { getPublicPosts, BlogPost } from '../../services/blogService';
+import api from '../../services/api';
+
+interface BlogPost {
+  id: string;
+  title: string;
+  slug: string;
+  content: string;
+  image?: string;
+  tags: string[];
+  created_at: string;
+}
+
+// Hardcoded blogs that will always be present
+const HARDCODED_BLOGS: BlogPost[] = [
+  {
+    id: 'hardcoded-1',
+    title: 'The Future of Strategic Communications',
+    slug: 'future-of-strategic-communications',
+    content: 'In an increasingly digital world, strategic communications must evolve to meet new challenges and opportunities. Organizations today face a complex landscape where traditional media, social platforms, and direct communication channels all play crucial roles in shaping public perception.',
+    image: 'https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&w=800',
+    tags: ['Strategy', 'Digital', 'Future'],
+    created_at: new Date('2024-01-15').toISOString()
+  },
+  {
+    id: 'hardcoded-2',
+    title: 'Crisis Communication Best Practices',
+    slug: 'crisis-communication-best-practices',
+    content: 'When crisis strikes, having a well-prepared communication strategy is essential for protecting your organization\'s reputation and maintaining stakeholder trust. Learn the key principles of effective crisis communication.',
+    image: 'https://images.pexels.com/photos/3184360/pexels-photo-3184360.jpeg?auto=compress&cs=tinysrgb&w=800',
+    tags: ['Crisis', 'Management', 'Strategy'],
+    created_at: new Date('2024-02-20').toISOString()
+  },
+  {
+    id: 'hardcoded-3',
+    title: 'Building Your Brand Through Storytelling',
+    slug: 'building-brand-through-storytelling',
+    content: 'In today\'s crowded marketplace, storytelling has become one of the most effective tools for building meaningful connections with your audience. Discover how to craft compelling brand narratives.',
+    image: 'https://images.pexels.com/photos/3184339/pexels-photo-3184339.jpeg?auto=compress&cs=tinysrgb&w=800',
+    tags: ['Branding', 'Storytelling', 'Marketing'],
+    created_at: new Date('2024-03-10').toISOString()
+  }
+];
 
 const Blog: React.FC = () => {
-  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [apiPosts, setApiPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTag, setSelectedTag] = useState<string>('');
 
   useEffect(() => {
-    const fetchPosts = async () => {
-      const data = await getPublicPosts();
-      if (data.length > 0) {
-        setPosts(data);
-      } else {
-        // Fallback demo posts
-        setPosts([
-          {
-            id: '1',
-            title: 'The Future of Strategic Communications',
-            slug: 'future-of-strategic-communications',
-            content: 'In an increasingly digital world, strategic communications must evolve...',
-            image: 'https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&w=800',
-            tags: ['Strategy', 'Digital', 'Future'],
-            created_at: new Date().toISOString()
-          },
-          {
-            id: '2',
-            title: 'Crisis Communication Best Practices',
-            slug: 'crisis-communication-best-practices',
-            content: 'When crisis strikes, having a well-prepared communication strategy...',
-            image: 'https://images.pexels.com/photos/3184360/pexels-photo-3184360.jpeg?auto=compress&cs=tinysrgb&w=800',
-            tags: ['Crisis', 'Management'],
-            created_at: new Date(Date.now() - 86400000).toISOString()
-          },
-        ]);
-      }
-      setLoading(false);
-    };
-
     fetchPosts();
   }, []);
+
+  const fetchPosts = async () => {
+    try {
+      // Fetch from Laravel API
+      const response = await api.get('/blog');
+      
+      // Handle response format
+      let data = response.data;
+      if (data.success && data.data) {
+        data = data.data;
+      } else if (!Array.isArray(data)) {
+        data = [];
+      }
+      
+      setApiPosts(data);
+    } catch (error) {
+      console.error('Failed to fetch blog posts:', error);
+      setApiPosts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Combine hardcoded and API posts, then sort by date
+  const allPosts = [...HARDCODED_BLOGS, ...apiPosts].sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
 
   const formatDate = (dateString: string) => {
     try {
@@ -58,7 +96,7 @@ const Blog: React.FC = () => {
     return Array.isArray(post.tags) ? post.tags : [];
   };
 
-  const filteredPosts = posts.filter(post => {
+  const filteredPosts = allPosts.filter(post => {
     const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          post.content.toLowerCase().includes(searchTerm.toLowerCase());
     const postTags = getPostTags(post);
@@ -66,7 +104,7 @@ const Blog: React.FC = () => {
     return matchesSearch && matchesTag;
   });
 
-  const allTags = Array.from(new Set(posts.flatMap(post => getPostTags(post))));
+  const allTags = Array.from(new Set(allPosts.flatMap(post => getPostTags(post))));
 
   if (loading) {
     return (
@@ -186,8 +224,39 @@ const Blog: React.FC = () => {
           {filteredPosts.length === 0 && (
             <div className="text-center py-12">
               <p className="text-xl text-gray">No articles found matching your criteria.</p>
+              <button 
+                onClick={() => {
+                  setSearchTerm('');
+                  setSelectedTag('');
+                }}
+                className="btn-primary mt-6"
+              >
+                Clear Filters
+              </button>
             </div>
           )}
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="section-padding bg-gradient-to-br from-primary/5 to-primary/10">
+        <div className="max-w-4xl mx-auto text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <h2 className="text-3xl md:text-4xl font-bold text-dark mb-6">
+              Want to Stay Updated?
+            </h2>
+            <p className="text-xl text-gray mb-8">
+              Get the latest insights and thought leadership delivered to your inbox
+            </p>
+            <Link to="/contact" className="btn-primary">
+              Get in Touch
+            </Link>
+          </motion.div>
         </div>
       </section>
     </div>

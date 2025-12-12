@@ -126,7 +126,7 @@ const BookingFailed: React.FC = () => {
               className="flex items-center justify-center bg-white hover:bg-gray-50 text-dark px-4 py-2 rounded-lg transition-colors"
             >
               <Phone className="w-4 h-4 mr-2" />
-              +234 816 504 5779
+              +234 705 841 2630
             </a>
             
             <a 

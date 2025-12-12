@@ -55,7 +55,7 @@ const Contact: React.FC = () => {
     {
       icon: Phone,
       title: "Call Us",
-      details: "+234 816 504 5779",
+      details: "+234 705 841 2630",
       description: "Mon-Fri from 8am to 6pm",
     },
     {
@@ -203,7 +203,7 @@ const Contact: React.FC = () => {
                           {...register("phone")}
                           type="tel"
                           className="input-field"
-                          placeholder="+234 816 504 5779"
+                          placeholder="+234 705 841 2630"
                         />
                       </div>
 

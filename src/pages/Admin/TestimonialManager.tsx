@@ -12,8 +12,8 @@ interface Testimonial {
   rating?: number;
   text: string;
   photo?: string;
-  approved: string | boolean;
-  createdAt: string;
+  approved: boolean; // Changed from string to boolean
+  created_at: string;
 }
 
 const TestimonialManager: React.FC = () => {
@@ -27,13 +27,22 @@ const TestimonialManager: React.FC = () => {
 
   const fetchTestimonials = async () => {
     try {
-      const response = await api.get(
-        "https://api.sheetbest.com/sheets/188fec19-5dd2-480c-9531-269673512323"
-      );
-      setTestimonials(response.data);
-      console.log(response.data);
+      // Use Laravel API endpoint instead of SheetBest
+      const response = await api.get("/admin/testimonials");
+      
+      // Handle response format
+      let data = response.data;
+      if (data.success && data.data) {
+        data = data.data;
+      } else if (Array.isArray(data)) {
+        data = data;
+      }
+      
+      setTestimonials(data);
+      console.log("Fetched testimonials:", data);
     } catch (error) {
       console.error("Failed to fetch testimonials:", error);
+      alert("Failed to load testimonials. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -41,14 +50,19 @@ const TestimonialManager: React.FC = () => {
 
   const approveTestimonial = async (id: string) => {
     try {
-      await api.patch(
-        `https://api.sheetbest.com/sheets/188fec19-5dd2-480c-9531-269673512323/id/${id}`,
-        { approved: "TRUE" }
-      );
-      await fetchTestimonials();
-    } catch (error) {
+      // Use Laravel API endpoint for approval
+      const response = await api.post(`/admin/testimonials/${id}/approve`);
+      
+      if (response.data.success || response.status === 200) {
+        alert("Testimonial approved successfully!");
+        await fetchTestimonials(); // Refresh the list
+      }
+    } catch (error: any) {
       console.error("Failed to approve testimonial:", error);
-      alert("Failed to approve testimonial. Please try again.");
+      alert(
+        error.response?.data?.message || 
+        "Failed to approve testimonial. Please try again."
+      );
     }
   };
 
@@ -56,11 +70,16 @@ const TestimonialManager: React.FC = () => {
     if (!confirm("Are you sure you want to delete this testimonial?")) return;
 
     try {
-      await api.delete(`https://api.sheetbest.com/sheets/188fec19-5dd2-480c-9531-269673512323/id/${id}`);
-      await fetchTestimonials();
-    } catch (error) {
+      // Use Laravel API endpoint for deletion
+      await api.delete(`/admin/testimonials/${id}`);
+      alert("Testimonial deleted successfully!");
+      await fetchTestimonials(); // Refresh the list
+    } catch (error: any) {
       console.error("Failed to delete testimonial:", error);
-      alert("Failed to delete testimonial. Please try again.");
+      alert(
+        error.response?.data?.message || 
+        "Failed to delete testimonial. Please try again."
+      );
     }
   };
 
@@ -76,15 +95,15 @@ const TestimonialManager: React.FC = () => {
   };
 
   const filteredTestimonials = testimonials.filter((testimonial) => {
-    if (filter === "pending") return (testimonial.approved === "FALSE");
-    if (filter === "approved") return (testimonial.approved === "TRUE");
+    if (filter === "pending") return !testimonial.approved;
+    if (filter === "approved") return testimonial.approved;
     return true;
   });
 
   const stats = {
     total: testimonials.length,
-    pending: testimonials.filter((t) => t.approved === "FALSE").length,
-    approved: testimonials.filter((t) => t.approved === "TRUE").length,
+    pending: testimonials.filter((t) => !t.approved).length,
+    approved: testimonials.filter((t) => t.approved).length,
   };
 
   if (loading) {
@@ -212,7 +231,7 @@ const TestimonialManager: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
                 className={`bg-white rounded-xl shadow-sm p-6 ${
-                  testimonial.approved === "FALSE"
+                  !testimonial.approved
                     ? "border-l-4 border-orange-500"
                     : "border-l-4 border-green-500"
                 }`}
@@ -258,26 +277,23 @@ const TestimonialManager: React.FC = () => {
                       <div className="flex items-center space-x-4">
                         <span
                           className={`px-3 py-1 rounded-full text-sm font-medium ${
-                            testimonial.approved === "TRUE"
+                            testimonial.approved
                               ? "bg-green-100 text-green-800"
                               : "bg-orange-100 text-orange-800"
                           }`}
                         >
-                          {testimonial.approved === "TRUE"
-                            ? "Approved"
-                            : "Pending Review"}
+                          {testimonial.approved ? "Approved" : "Pending Review"}
                         </span>
                         <span className="text-sm text-gray">
                           Submitted:{" "}
-                          {format(
-                            new Date(testimonial.createdAt),
-                            "MMM dd, yyyy"
-                          )}
+                          {testimonial.created_at && !isNaN(Date.parse(testimonial.created_at))
+                            ? format(new Date(testimonial.created_at), "MMM dd, yyyy")
+                            : "Unknown date"}
                         </span>
                       </div>
 
                       <div className="flex space-x-2">
-                        {testimonial.approved === "FALSE" ? (
+                        {!testimonial.approved && (
                           <button
                             onClick={() => approveTestimonial(testimonial.id)}
                             className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm inline-flex items-center transition-colors"
@@ -285,15 +301,14 @@ const TestimonialManager: React.FC = () => {
                             <Check className="w-4 h-4 mr-1" />
                             Approve
                           </button>
-                        ) : (
-                          <button
-                            onClick={() => deleteTestimonial(testimonial.id)}
-                            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm inline-flex items-center transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4 mr-1" />
-                            Delete
-                          </button>
                         )}
+                        <button
+                          onClick={() => deleteTestimonial(testimonial.id)}
+                          className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm inline-flex items-center transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4 mr-1" />
+                          Delete
+                        </button>
                       </div>
                     </div>
                   </div>

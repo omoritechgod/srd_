@@ -147,7 +147,7 @@ const PrivacyPolicy: React.FC = () => {
                   <strong>Email:</strong> info@srdconsultingltd.com
                 </p>
                 <p>
-                  <strong>Phone:</strong> +234 816 504 5779
+                  <strong>Phone:</strong> +234 705 841 2630
                 </p>
                 <p>
                   <strong>Address:</strong> SRD Consulting Ltd, Nigeria

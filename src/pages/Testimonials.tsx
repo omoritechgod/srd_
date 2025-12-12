@@ -2,14 +2,24 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Star, Quote, ChevronLeft, ChevronRight, Send } from "lucide-react";
 import { useForm } from "react-hook-form";
-import { 
-  getApprovedTestimonials, 
-  submitTestimonial, 
-  Testimonial, 
-  TestimonialSubmission 
-} from "../services/testimonialService";
+import api from "../services/api";
 
-interface TestimonialFormData extends TestimonialSubmission {
+interface Testimonial {
+  id: string;
+  name: string;
+  org?: string;
+  rating?: number;
+  text: string;
+  photo?: string;
+  approved: boolean;
+  created_at: string;
+}
+
+interface TestimonialFormData {
+  name: string;
+  org?: string;
+  rating: number;
+  text: string;
   photo?: FileList;
 }
 
@@ -23,40 +33,81 @@ const Testimonials: React.FC = () => {
   const { register, handleSubmit, reset, formState: { errors } } = useForm<TestimonialFormData>();
 
   useEffect(() => {
-    const fetchTestimonials = async () => {
-      const data = await getApprovedTestimonials();
-      if (data.length > 0) {
-        setTestimonials(data);
+    fetchTestimonials();
+  }, []);
+
+  const fetchTestimonials = async () => {
+    try {
+      // Use Laravel API endpoint for public approved testimonials
+      const response = await api.get('/testimonials');
+      
+      // Handle response format
+      let data = response.data;
+      if (data.success && data.data) {
+        data = data.data;
+      } else if (!Array.isArray(data)) {
+        data = [];
+      }
+      
+      // Filter for approved testimonials only (safety check)
+      const approvedTestimonials = data.filter((t: Testimonial) => t.approved);
+      
+      if (approvedTestimonials.length > 0) {
+        setTestimonials(approvedTestimonials);
       } else {
         // Fallback demo testimonials
         setTestimonials([
           {
-            id: "1",
+            id: "demo-1",
             name: "Sarah Johnson",
             org: "Tech Innovations Ltd",
             rating: 5,
-            text: "SRD Consulting transformed our communication strategy completely.",
+            text: "SRD Consulting transformed our communication strategy completely. Their expertise in media relations helped us reach audiences we never thought possible.",
             photo: "https://images.pexels.com/photos/3184339/pexels-photo-3184339.jpeg?auto=compress&cs=tinysrgb&w=400",
             approved: true,
             created_at: new Date().toISOString(),
           },
           {
-            id: "2",
+            id: "demo-2",
             name: "Michael Chen",
             org: "Global Manufacturing Corp",
             rating: 5,
-            text: "During our crisis situation, SRD provided exceptional guidance and support.",
+            text: "During our crisis situation, SRD provided exceptional guidance and support. Their strategic approach helped us navigate complex challenges with confidence.",
             photo: "https://images.pexels.com/photos/3184394/pexels-photo-3184394.jpeg?auto=compress&cs=tinysrgb&w=400",
+            approved: true,
+            created_at: new Date().toISOString(),
+          },
+          {
+            id: "demo-3",
+            name: "Emma Williams",
+            org: "Startup Ventures Inc",
+            rating: 5,
+            text: "The team at SRD helped us craft our brand story in a way that resonates with our target market. Their storytelling approach is second to none.",
+            photo: "https://images.pexels.com/photos/3184298/pexels-photo-3184298.jpeg?auto=compress&cs=tinysrgb&w=400",
             approved: true,
             created_at: new Date().toISOString(),
           },
         ]);
       }
+    } catch (error) {
+      console.error('Failed to fetch testimonials:', error);
+      // Use fallback testimonials on error
+      setTestimonials([
+        {
+          id: "demo-1",
+          name: "Sarah Johnson",
+          org: "Tech Innovations Ltd",
+          rating: 5,
+          text: "SRD Consulting transformed our communication strategy completely.",
+          photo: "https://images.pexels.com/photos/3184339/pexels-photo-3184339.jpeg?auto=compress&cs=tinysrgb&w=400",
+          approved: true,
+          created_at: new Date().toISOString(),
+        },
+      ]);
+    } finally {
       setLoading(false);
-    };
-
-    fetchTestimonials();
-  }, []);
+    }
+  };
 
   const onSubmit = async (data: TestimonialFormData) => {
     setSubmitting(true);
@@ -80,7 +131,8 @@ const Testimonials: React.FC = () => {
         }
       }
 
-      const success = await submitTestimonial({
+      // Submit to Laravel API
+      const response = await api.post('/testimonials', {
         name: data.name,
         org: data.org,
         rating: data.rating,
@@ -88,12 +140,16 @@ const Testimonials: React.FC = () => {
         photo: photoUrl || undefined,
       });
 
-      if (success) {
+      if (response.status === 201 || response.data.success) {
         setSubmitted(true);
         reset();
       }
-    } catch (error) {
-      alert("Failed to submit testimonial. Please try again.");
+    } catch (error: any) {
+      console.error('Failed to submit testimonial:', error);
+      alert(
+        error.response?.data?.message || 
+        'Failed to submit testimonial. Please try again.'
+      );
     } finally {
       setSubmitting(false);
     }
@@ -126,7 +182,7 @@ const Testimonials: React.FC = () => {
               Client <span className="text-primary">Success Stories</span>
             </h1>
             <p className="text-xl text-gray max-w-3xl mx-auto">
-              Hear from our clients about how SRD Consulting has helped them achieve their goals.
+              Hear from our clients about how SRD Consulting has helped them achieve their communication goals.
             </p>
           </motion.div>
         </div>
@@ -173,13 +229,15 @@ const Testimonials: React.FC = () => {
                 <>
                   <button
                     onClick={prevTestimonial}
-                    className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-4 bg-white shadow-lg rounded-full p-3 hover:bg-gray-50"
+                    className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-4 bg-white shadow-lg rounded-full p-3 hover:bg-gray-50 transition-colors"
+                    aria-label="Previous testimonial"
                   >
                     <ChevronLeft className="w-6 h-6 text-dark" />
                   </button>
                   <button
                     onClick={nextTestimonial}
-                    className="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-4 bg-white shadow-lg rounded-full p-3 hover:bg-gray-50"
+                    className="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-4 bg-white shadow-lg rounded-full p-3 hover:bg-gray-50 transition-colors"
+                    aria-label="Next testimonial"
                   >
                     <ChevronRight className="w-6 h-6 text-dark" />
                   </button>
@@ -193,6 +251,7 @@ const Testimonials: React.FC = () => {
                       key={index}
                       onClick={() => setCurrentIndex(index)}
                       className={`w-3 h-3 rounded-full transition-colors ${index === currentIndex ? "bg-primary" : "bg-gray-300"}`}
+                      aria-label={`Go to testimonial ${index + 1}`}
                     />
                   ))}
                 </div>
@@ -221,7 +280,7 @@ const Testimonials: React.FC = () => {
                 <Send className="w-8 h-8 text-green-600" />
               </div>
               <h3 className="text-2xl font-bold text-dark mb-4">Thank You!</h3>
-              <p className="text-gray mb-6">Your testimonial has been submitted and is awaiting approval.</p>
+              <p className="text-gray mb-6">Your testimonial has been submitted and is awaiting approval. We appreciate you taking the time to share your experience!</p>
               <button onClick={() => setSubmitted(false)} className="btn-primary">Submit Another</button>
             </motion.div>
           ) : (
@@ -240,7 +299,7 @@ const Testimonials: React.FC = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-dark mb-2">Organization</label>
-                    <input {...register("org")} className="input-field" placeholder="Your organization" />
+                    <input {...register("org")} className="input-field" placeholder="Your organization (optional)" />
                   </div>
                 </div>
 
@@ -260,10 +319,10 @@ const Testimonials: React.FC = () => {
                 <div>
                   <label className="block text-sm font-medium text-dark mb-2">Your Testimonial *</label>
                   <textarea
-                    {...register("text", { required: "Testimonial is required" })}
+                    {...register("text", { required: "Testimonial is required", minLength: { value: 20, message: "Please write at least 20 characters" } })}
                     rows={5}
                     className="input-field resize-none"
-                    placeholder="Share your experience..."
+                    placeholder="Share your experience with SRD Consulting..."
                   />
                   {errors.text && <p className="text-red-500 text-sm mt-1">{errors.text.message}</p>}
                 </div>
@@ -274,8 +333,18 @@ const Testimonials: React.FC = () => {
                   <p className="text-sm text-gray mt-1">Upload a professional photo (optional)</p>
                 </div>
 
-                <button type="submit" disabled={submitting} className="btn-primary w-full disabled:opacity-50">
-                  {submitting ? "Submitting..." : "Submit Testimonial"}
+                <button type="submit" disabled={submitting} className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center">
+                  {submitting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-5 h-5 mr-2" />
+                      Submit Testimonial
+                    </>
+                  )}
                 </button>
               </form>
             </motion.div>

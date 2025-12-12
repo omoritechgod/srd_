@@ -66,7 +66,7 @@ const bankDetailsData: BankDetails[] = [
   }
 ];
 
-const whatsappNumber = '+234 816 504 5779';
+const whatsappNumber = '+234 705 841 2630';
 
 type PaymentMethod = 'selection' | 'paystack' | 'bank_transfer';
 
